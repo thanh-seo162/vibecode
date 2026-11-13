@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Màn hình · Đập Chuột</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<nav class="nav" aria-label="Tài liệu">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">Đập Chuột · Tài liệu</a>
+    <a href="01-tong-quan.html">Tổng quan</a>
+    <a href="02-chuc-nang.html">Chức năng</a>
+    <a href="03-man-hinh.html" aria-current="page">Màn hình</a>
+    <a href="04-quy-tac-du-lieu.html">Quy tắc &amp; dữ liệu</a>
+    <a href="05-ke-hoach-test.html">Kế hoạch test</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <p class="eyebrow">03 · Màn hình</p>
+    <h1>Màn hình &amp; giao diện</h1>
+    <p class="lede">Ba màn hình trên cùng một trang. Phong cách tối giản theo design/tokens.css: nền sáng, chữ lớn, nút dạng viên thuốc.</p>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <ul class="toc">
+      <li><a href="#tong-the">Tổng thể</a></li>
+      <li><a href="#bat-dau">Màn hình bắt đầu</a></li>
+      <li><a href="#choi">Màn hình chơi</a></li>
+      <li><a href="#ket-thuc">Màn hình kết thúc</a></li>
+      <li><a href="#hinh-ve">Hình vẽ</a></li>
+      <li><a href="#hieu-ung">Hiệu ứng</a></li>
+      <li><a href="#responsive">Responsive</a></li>
+      <li><a href="#token">Token sử dụng</a></li>
+    </ul>
+
+    <h2 id="tong-the">Tổng thể</h2>
+    <p>Bản phác ba màn hình trên điện thoại (chỉ minh hoạ bố cục, không phải thiết kế cuối cùng):</p>
+    <div class="screens">
+      <div class="phone">
+        <span class="lbl">S1 · Bắt đầu</span>
+        <div class="big">Đập Chuột</div>
+        <div class="small">Đập trúng chuột được 1 điểm. Bạn có 30 giây!</div>
+        <div class="small">Kỷ lục: <strong>25</strong></div>
+        <div class="pill">Bắt đầu</div>
+        <span class="space"></span>
+      </div>
+      <div class="phone">
+        <span class="lbl">S2 · Đang chơi</span>
+        <div class="hud"><span>Điểm: 12</span><span class="red">Thời gian: 4s</span><span>Kỷ lục: 25</span></div>
+        <div class="grid">
+          <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+          <div class="hole"></div>
+          <div class="hole up"><span class="plus">+1</span>
+            <svg viewBox="0 0 100 90" aria-hidden="true"><use href="#mouse-hit"/></svg>
+          </div>
+          <div class="hole"></div>
+          <div class="hole up">
+            <svg viewBox="0 0 100 90" aria-hidden="true"><use href="#mouse"/></svg>
+          </div>
+          <div class="hole"></div><div class="hole"></div>
+        </div>
+        <span class="small" style="margin-top:8px">Hai chuột chỉ để minh hoạ hai trạng thái. Khi chơi thật, mỗi lúc chỉ có 1 chuột.</span>
+        <span class="space"></span>
+      </div>
+      <div class="phone">
+        <span class="lbl">S3 · Kết thúc</span>
+        <div class="big">Hết giờ!</div>
+        <div class="huge">28</div>
+        <div class="small">điểm</div>
+        <div class="gold">Kỷ lục mới!</div>
+        <div class="small">Kỷ lục: <strong>28</strong></div>
+        <div class="pill">Chơi lại</div>
+        <span class="space"></span>
+      </div>
+    </div>
+    <ul>
+      <li>Cả ba màn hình nằm trong một file <code>index.html</code>. Mỗi lúc chỉ hiện một màn hình, chuyển bằng thuộc tính <code>hidden</code> hoặc một class trạng thái trên <code>&lt;body&gt;</code>.</li>
+      <li>Nội dung căn giữa, rộng tối đa khoảng 480px trên máy tính, để bàn chơi không bị quá to.</li>
+      <li>Nền trang <code>--color-bg</code>. Bàn chơi đặt trong một khối <code>--color-bg-alt</code>, bo góc <code>--radius-xl</code>.</li>
+    </ul>
+
+    <h2 id="bat-dau">S1 · Màn hình bắt đầu</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Thành phần</th><th>Nội dung</th><th>Kiểu</th></tr></thead>
+        <tbody>
+          <tr><td>Tên game</td><td>"Đập Chuột"</td><td><code>--text-display</code>, đậm 600</td></tr>
+          <tr><td>Luật ngắn</td><td>"Đập trúng chuột được 1 điểm. Bạn có 30 giây!"</td><td><code>--text-subhead</code>, <code>--color-text-secondary</code></td></tr>
+          <tr><td>Kỷ lục</td><td><code>Kỷ lục: N</code>, chưa có thì <code>Kỷ lục: 0</code></td><td><code>--text-body</code>, số đậm 600</td></tr>
+          <tr><td>Nút chính</td><td>"Bắt đầu"</td><td>Nút chính cỡ lớn: nền <code>--color-accent</code>, bo <code>--radius-pill</code>, cao ≥ 48px</td></tr>
+          <tr><td>Hình minh hoạ (nên có)</td><td>Một con chuột SVG thò lên từ hang</td><td>Không quá 120px chiều cao</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="choi">S2 · Màn hình chơi</h2>
+    <h3>Thanh trên cùng (HUD)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mục</th><th>Định dạng</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>Điểm</td><td><code>Điểm: 12</code></td><td>Cập nhật ngay khi đập trúng. Có thể nảy nhẹ (scale 1 → 1,15 → 1) trong 150ms.</td></tr>
+          <tr><td>Thời gian</td><td><code>Thời gian: 18s</code></td><td>Đếm lùi theo từng giây. Từ <code>5s</code> trở xuống, chữ màu <code>--color-danger</code>.</td></tr>
+          <tr><td>Kỷ lục</td><td><code>Kỷ lục: 25</code></td><td>Kỷ lục đã lưu, <em>không</em> đổi trong lúc chơi. Chỉ cập nhật ở màn hình kết thúc.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul>
+      <li>Chữ HUD <code>--text-callout</code> trên điện thoại, <code>--text-body</code> trên máy tính, đậm 600. Số dùng <code>font-variant-numeric: tabular-nums</code> để không nhảy khi đổi giá trị.</li>
+      <li>Vùng thời gian có <code>aria-live="off"</code>, tránh trình đọc màn hình đọc mỗi giây. Điểm có <code>aria-live="polite"</code>.</li>
+    </ul>
+
+    <h3>Bàn chơi</h3>
+    <ul>
+      <li>Lưới CSS <code>grid-template-columns: repeat(3, 1fr)</code>, khoảng cách <code>--space-3</code> (điện thoại) tới <code>--space-5</code> (máy tính).</li>
+      <li>Mỗi ô là một <code>&lt;button&gt;</code> vuông (<code>aspect-ratio: 1</code>), tối thiểu 80×80px, có <code>aria-label="Hang 1"</code>…<code>"Hang 9"</code>.</li>
+      <li>Ô có nền <code>--color-bg-elevated</code>, bo <code>--radius-lg</code>. Miệng hang là một hình elip tối ở nửa dưới ô.</li>
+      <li>Chuột nằm trong ô, bị cắt bởi <code>overflow: hidden</code> ở mép miệng hang, nên trông như chui lên từ dưới đất.</li>
+      <li>Con trỏ hình búa (F-14, nên có): <code>cursor: url(hammer.svg) 8 8, pointer</code>, chỉ áp dụng khi <code>@media (pointer: fine)</code>.</li>
+    </ul>
+
+    <h2 id="ket-thuc">S3 · Màn hình kết thúc</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Thành phần</th><th>Nội dung</th><th>Kiểu</th></tr></thead>
+        <tbody>
+          <tr><td>Tiêu đề</td><td>"Hết giờ!"</td><td><code>--text-headline</code>, đậm 600</td></tr>
+          <tr><td>Điểm lượt vừa chơi</td><td>Số điểm, ví dụ <code>28</code>, dòng dưới ghi "điểm"</td><td><code>--text-hero</code> (80px máy tính, 48px điện thoại)</td></tr>
+          <tr><td>Kỷ lục mới</td><td>"Kỷ lục mới!", chỉ hiện khi vừa phá kỷ lục</td><td><code>--text-title-3</code>, màu <code>--color-warning</code>, xuất hiện có hiệu ứng nảy</td></tr>
+          <tr><td>Kỷ lục</td><td><code>Kỷ lục: N</code>, giá trị sau khi đã cập nhật</td><td><code>--text-body</code></td></tr>
+          <tr><td>Nút</td><td>"Chơi lại"</td><td>Nút chính cỡ lớn, giống nút "Bắt đầu"</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Khi chuyển sang S3, focus bàn phím đặt vào nút "Chơi lại".</p>
+
+    <h2 id="hinh-ve">Hình vẽ</h2>
+    <p>Mọi hình vẽ bằng SVG nội tuyến <em>(quyết định Q2)</em>: không file ảnh, không emoji. Nét đơn giản, màu trung tính hợp với bảng màu của <code>tokens.css</code>.</p>
+    <div class="cards">
+      <div class="card" style="align-items:center;text-align:center">
+        <svg viewBox="0 0 100 90" width="120" role="img" aria-label="Chuột bình thường"><use href="#mouse"/></svg>
+        <h3>Chuột bình thường</h3>
+        <p>Thân xám, tai tròn, mũi hồng, mắt chấm đen.</p>
+      </div>
+      <div class="card" style="align-items:center;text-align:center">
+        <svg viewBox="0 0 100 90" width="120" role="img" aria-label="Chuột bị choáng"><use href="#mouse-hit"/></svg>
+        <h3>Chuột bị choáng</h3>
+        <p>Mắt hình chữ X, có sao nhỏ trên đầu. Hiện khoảng 200ms rồi lặn.</p>
+      </div>
+      <div class="card" style="align-items:center;text-align:center">
+        <svg viewBox="0 0 100 90" width="120" role="img" aria-label="Búa"><use href="#hammer"/></svg>
+        <h3>Búa (nên có)</h3>
+        <p>Dùng làm con trỏ trên máy tính, cỡ 32×32px.</p>
+      </div>
+    </div>
+
+    <h2 id="hieu-ung">Hiệu ứng</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Hiệu ứng</th><th>Cách làm</th><th>Thời lượng</th></tr></thead>
+        <tbody>
+          <tr><td>Chuột thò lên</td><td><code>transform: translateY(100%) → 0</code></td><td>150ms, <code>--ease-standard</code></td></tr>
+          <tr><td>Chuột tự lặn</td><td><code>translateY(0) → 100%</code></td><td>150ms</td></tr>
+          <tr><td>Bị đập</td><td>Đổi sang hình choáng, ô nháy nhẹ, rồi lặn</td><td>200ms choáng + 150ms lặn</td></tr>
+          <tr><td>Chữ +1 bay lên</td><td>Hiện ở trên ô, bay lên 24px và mờ dần. Màu <code>--color-success</code>, đậm 700.</td><td>600ms</td></tr>
+          <tr><td>Điểm nảy</td><td>Scale 1 → 1,15 → 1</td><td>150ms</td></tr>
+          <tr><td>Chuyển màn hình</td><td>Mờ dần vào</td><td>250ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note warn">
+      <strong>Hiệu ứng không được ảnh hưởng tới luật chơi</strong>
+      Thời gian thò lên 0,8–1,2 giây được đo từ lúc chuột bắt đầu thò lên. Trạng thái "bị đập" được đặt ngay lúc bấm, không chờ hiệu ứng xong. Khi <code>prefers-reduced-motion: reduce</code>, các hiệu ứng chỉ còn đổi trạng thái tức thì, chữ +1 vẫn hiện nhưng không bay.
+    </div>
+
+    <h2 id="responsive">Responsive</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Độ rộng màn hình</th><th>Bàn chơi</th><th>Ô</th></tr></thead>
+        <tbody>
+          <tr><td>360px (nhỏ nhất)</td><td>Rộng <code>100% − 2×16px</code> = 328px, khe 12px</td><td>≈ 101px, trên mức tối thiểu 80px</td></tr>
+          <tr><td>375–734px</td><td>Rộng theo màn hình, tối đa 420px</td><td>101–132px</td></tr>
+          <tr><td>≥ 735px</td><td>Rộng cố định 440px, căn giữa</td><td>≈ 133px</td></tr>
+          <tr><td>Màn hình nằm ngang thấp</td><td>Bàn chơi giới hạn theo chiều cao: <code>min(440px, 100vh − HUD − lề)</code></td><td>Vẫn ≥ 80px</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="token">Token sử dụng</h2>
+    <p>Game nạp <code>design/tokens.css</code>, không tự đặt mã màu hay cỡ chữ cứng. Các token chính:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nhóm</th><th>Token</th></tr></thead>
+        <tbody>
+          <tr><td>Nền</td><td><code>--color-bg</code>, <code>--color-bg-alt</code>, <code>--color-bg-elevated</code></td></tr>
+          <tr><td>Chữ</td><td><code>--color-text</code>, <code>--color-text-secondary</code></td></tr>
+          <tr><td>Nút</td><td><code>--color-accent</code>, <code>--color-accent-hover</code>, <code>--radius-pill</code></td></tr>
+          <tr><td>Trạng thái</td><td><code>--color-danger</code> (5 giây cuối), <code>--color-success</code> (+1), <code>--color-warning</code> (Kỷ lục mới!)</td></tr>
+          <tr><td>Chữ</td><td><code>--text-hero</code>, <code>--text-display</code>, <code>--text-headline</code>, <code>--text-subhead</code>, <code>--text-body</code>, <code>--text-callout</code></td></tr>
+          <tr><td>Bố cục</td><td><code>--space-*</code>, <code>--radius-lg</code>, <code>--radius-xl</code>, <code>--gutter</code></td></tr>
+          <tr><td>Chuyển động</td><td><code>--ease-standard</code>, <code>--duration-fast</code>, <code>--duration-base</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Chế độ tối có sẵn trong <code>tokens.css</code>, nên game tự đổi theo hệ điều hành mà không cần code thêm.</p>
+
+    <nav class="pager" aria-label="Trang trước và sau">
+      <a href="02-chuc-nang.html"><span>‹ Trước</span>02 · Chức năng</a>
+      <a class="next" href="04-quy-tac-du-lieu.html"><span>Tiếp theo ›</span>04 · Quy tắc &amp; dữ liệu</a>
+    </nav>
+  </div>
+</main>
+
+<!-- Định nghĩa hình SVG dùng lại -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="mouse-base">
+      <circle cx="24" cy="26" r="15" fill="#a1a1a6"/>
+      <circle cx="24" cy="26" r="8" fill="#f4b6c2"/>
+      <circle cx="76" cy="26" r="15" fill="#a1a1a6"/>
+      <circle cx="76" cy="26" r="8" fill="#f4b6c2"/>
+      <path d="M14 90 C14 50 30 30 50 30 C70 30 86 50 86 90 Z" fill="#b8b8bd"/>
+      <ellipse cx="50" cy="66" rx="7" ry="5.5" fill="#e8798f"/>
+      <path d="M40 66 H18 M40 70 L20 76 M60 66 H82 M60 70 L80 76" stroke="#6e6e73" stroke-width="1.6" stroke-linecap="round"/>
+    </g>
+    <g id="mouse">
+      <use href="#mouse-base"/>
+      <circle cx="38" cy="52" r="4.5" fill="#1d1d1f"/>
+      <circle cx="62" cy="52" r="4.5" fill="#1d1d1f"/>
+      <circle cx="39.5" cy="50.5" r="1.4" fill="#fff"/>
+      <circle cx="63.5" cy="50.5" r="1.4" fill="#fff"/>
+    </g>
+    <g id="mouse-hit">
+      <use href="#mouse-base"/>
+      <path d="M33 47 L43 57 M43 47 L33 57 M57 47 L67 57 M67 47 L57 57" stroke="#1d1d1f" stroke-width="3" stroke-linecap="round"/>
+      <path d="M50 4 L52.5 10 L59 10.5 L54 14.5 L55.5 21 L50 17.5 L44.5 21 L46 14.5 L41 10.5 L47.5 10 Z" fill="#ffcc00"/>
+      <path d="M70 10 L71.5 13.5 L75 14 L72.5 16.5 L73 20 L70 18 L67 20 L67.5 16.5 L65 14 L68.5 13.5 Z" fill="#ffcc00"/>
+    </g>
+    <g id="hammer">
+      <rect x="44" y="34" width="12" height="54" rx="5" fill="#b07a4a"/>
+      <rect x="18" y="12" width="64" height="28" rx="8" fill="#6e6e73"/>
+      <rect x="18" y="12" width="12" height="28" rx="4" fill="#424245"/>
+      <rect x="70" y="12" width="12" height="28" rx="4" fill="#424245"/>
+    </g>
+  </defs>
+</svg>
+
+<footer><div class="container">Đập Chuột · Tài liệu đặc tả · Giao diện theo <code>design/tokens.css</code></div></footer>
+</body>
+</html>

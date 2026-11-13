@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kế hoạch test · Đập Chuột</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<nav class="nav" aria-label="Tài liệu">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">Đập Chuột · Tài liệu</a>
+    <a href="01-tong-quan.html">Tổng quan</a>
+    <a href="02-chuc-nang.html">Chức năng</a>
+    <a href="03-man-hinh.html">Màn hình</a>
+    <a href="04-quy-tac-du-lieu.html">Quy tắc &amp; dữ liệu</a>
+    <a href="05-ke-hoach-test.html" aria-current="page">Kế hoạch test</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <p class="eyebrow">05 · Kế hoạch test</p>
+    <h1>Kế hoạch test</h1>
+    <p class="lede">Hai lớp kiểm tra: tests.html tự động kiểm tra phần logic, còn test thủ công kiểm tra trải nghiệm thật trên trình duyệt và điện thoại.</p>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <ul class="toc">
+      <li><a href="#chien-luoc">Chiến lược</a></li>
+      <li><a href="#tu-dong">Test tự động</a></li>
+      <li><a href="#thu-cong">Test thủ công</a></li>
+      <li><a href="#thiet-bi">Thiết bị</a></li>
+      <li><a href="#truy-vet">Bảng truy vết</a></li>
+      <li><a href="#quy-trinh">Quy trình</a></li>
+    </ul>
+
+    <h2 id="chien-luoc">Chiến lược</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Lớp</th><th>Kiểm tra cái gì</th><th>Công cụ</th><th>Khi nào chạy</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag auto">Tự động</span></td><td>Hàm thuần trong <code>js/logic.js</code>: chọn hang, tính điểm, tính giờ, kỷ lục, huỷ lượt</td><td><code>tests.html</code>: mở bằng trình duyệt, kết quả xanh/đỏ hiện ngay trên trang</td><td>Sau mỗi lần sửa logic</td></tr>
+          <tr><td><span class="tag">Thủ công</span></td><td>Giao diện, hiệu ứng, cảm ứng, độ chính xác 30 giây, tải lại trang</td><td>Trình duyệt thật, điện thoại thật, đồng hồ bấm giờ</td><td>Trước khi coi là hoàn thành</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Trang tests.html</h3>
+    <ul>
+      <li>Nằm ở thư mục gốc, nạp <code>js/logic.js</code> bằng script thường. Mở thẳng file là chạy, không cần cài gì.</li>
+      <li>Tự viết một hàm <code>test(tên, hàm)</code> nhỏ (khoảng 20 dòng), không dùng thư viện test.</li>
+      <li>Hiện từng test với dấu ✓ hoặc ✗, tổng số đạt/trượt ở đầu trang, và lỗi chi tiết của test trượt. Tiêu đề tab đổi thành <code>✓ 30/30</code> hoặc <code>✗ 2 lỗi</code>.</li>
+      <li>Dùng hàm ngẫu nhiên giả (trả về dãy số cố định) và bộ nhớ giả (đối tượng có <code>getItem</code>/<code>setItem</code>) để test luôn ra cùng kết quả.</li>
+      <li>Không dùng hẹn giờ thật. Thời gian được truyền vào dưới dạng tham số <code>now</code>.</li>
+    </ul>
+
+    <h2 id="tu-dong">Ca test tự động (tests.html)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Nhóm</th><th>Ca test</th><th>Kết quả mong đợi</th></tr></thead>
+        <tbody>
+          <tr><td>AT-01</td><td>Chọn hang</td><td><code>pickHole(null, rand)</code> với rand = 0 và 0,999</td><td>Trả về 0 và 8</td></tr>
+          <tr><td>AT-02</td><td>Chọn hang</td><td>Gọi <code>pickHole(h, Math.random)</code> 10.000 lần với mỗi h từ 0 đến 8</td><td>Không lần nào trả về h, mọi kết quả trong 0–8</td></tr>
+          <tr><td>AT-03</td><td>Chọn hang</td><td><code>lastHole = 4</code>, rand cho k = 0…7</td><td>Lần lượt 0,1,2,3,5,6,7,8: đủ 8 hang, mỗi hang đúng một lần</td></tr>
+          <tr><td>AT-04</td><td>Chọn hang</td><td>Phân bố trên 80.000 lần với <code>lastHole = 0</code></td><td>Mỗi hang 1–8 chiếm 12,5% ± 1%</td></tr>
+          <tr><td>AT-05</td><td>Ngẫu nhiên</td><td><code>randomBetween(800, 1200, rand)</code> với rand = 0 / 0,5 / 0,999</td><td>800 / 1000 / gần 1200, luôn trong [800, 1200]</td></tr>
+          <tr><td>AT-06</td><td>Lượt mới</td><td><code>createRound(1000, 7, 3)</code></td><td><code>score 0</code>, <code>endAt 31000</code>, <code>phase "playing"</code>, <code>roundId 4</code>, chuột <code>hidden</code>, <code>lastHole null</code>, <code>highScore 7</code></td></tr>
+          <tr><td>AT-07</td><td>Điểm</td><td>Chuột <code>up</code> ở hang 2, <code>tryHit(…, 2, t)</code> trước khi hết giờ</td><td>Trả về <code>true</code>, điểm từ 0 lên 1, chuột thành <code>hit</code></td></tr>
+          <tr><td>AT-08</td><td>Điểm</td><td>Gọi <code>tryHit</code> 5 lần liên tiếp vào cùng con chuột</td><td>Chỉ lần đầu <code>true</code>, điểm = 1</td></tr>
+          <tr><td>AT-09</td><td>Điểm</td><td>Chuột <code>up</code> ở hang 2, bấm hang 5</td><td><code>false</code>, điểm không đổi, chuột vẫn <code>up</code></td></tr>
+          <tr><td>AT-10</td><td>Điểm</td><td>Bấm khi chuột <code>hidden</code> hoặc <code>hit</code></td><td><code>false</code>, điểm không đổi</td></tr>
+          <tr><td>AT-11</td><td>Điểm</td><td>Chuột <code>up</code>, bấm đúng hang với <code>now = endAt</code> và <code>now = endAt + 1</code></td><td>Cả hai <code>false</code></td></tr>
+          <tr><td>AT-12</td><td>Điểm</td><td>Bấm đúng hang khi <code>phase = "ended"</code></td><td><code>false</code></td></tr>
+          <tr><td>AT-13</td><td>Điểm</td><td>Đập trúng 3 con liên tiếp (show → hit → hide, 3 lần)</td><td>Điểm = 3</td></tr>
+          <tr><td>AT-14</td><td>Thời gian</td><td><code>remainingMs</code> tại now = startAt, startAt+12.345, endAt, endAt+500</td><td>30000, 17655, 0, 0</td></tr>
+          <tr><td>AT-15</td><td>Thời gian</td><td><code>displaySeconds</code> với 30000, 29001, 29000, 4200, 1, 0</td><td>30, 30, 29, 5, 1, 0</td></tr>
+          <tr><td>AT-16</td><td>Thời gian</td><td><code>isWarning</code> với 6, 5, 1, 0</td><td>false, true, true, true</td></tr>
+          <tr><td>AT-17</td><td>Kết thúc</td><td><code>finishRound</code> khi chuột đang <code>up</code></td><td><code>phase "ended"</code>, chuột <code>hidden</code></td></tr>
+          <tr><td>AT-18</td><td>Kết thúc</td><td>Gọi <code>finishRound</code> hai lần</td><td>Lần hai không đổi gì, <code>isNewRecord</code> giữ nguyên</td></tr>
+          <tr><td>AT-19</td><td>Kỷ lục</td><td>Điểm 10, kỷ lục 7 → kết thúc</td><td><code>isNewRecord true</code>, bộ nhớ giả lưu <code>"10"</code></td></tr>
+          <tr><td>AT-20</td><td>Kỷ lục</td><td>Điểm 7, kỷ lục 7</td><td><code>isNewRecord false</code>, không ghi bộ nhớ</td></tr>
+          <tr><td>AT-21</td><td>Kỷ lục</td><td>Điểm 3, kỷ lục 7</td><td><code>isNewRecord false</code>, bộ nhớ vẫn <code>"7"</code></td></tr>
+          <tr><td>AT-22</td><td>Kỷ lục</td><td>Điểm 0, kỷ lục 0</td><td><code>isNewRecord false</code></td></tr>
+          <tr><td>AT-23</td><td>Kỷ lục</td><td><code>parseHighScore</code> với <code>null</code>, <code>""</code>, <code>"abc"</code>, <code>"-3"</code>, <code>"12"</code>, <code>"12.7"</code></td><td>0, 0, 0, 0, 12, 12</td></tr>
+          <tr><td>AT-24</td><td>Kỷ lục</td><td>Bộ nhớ giả mà <code>getItem</code>/<code>setItem</code> ném lỗi</td><td><code>loadHighScore</code> trả về 0, <code>saveHighScore</code> không ném lỗi ra ngoài</td></tr>
+          <tr><td>AT-25</td><td>Huỷ lượt</td><td>Tạo lượt A, rồi lượt B. Hàm hẹn giờ mang <code>roundId</code> của A chạy trên trạng thái B.</td><td>Trạng thái B không đổi (kiểm tra qua hàm <code>isCurrentRound(state, id)</code>)</td></tr>
+          <tr><td>AT-26</td><td>Cấu hình</td><td>Đọc <code>CONFIG</code></td><td>Đúng các giá trị trong <a href="04-quy-tac-du-lieu.html#hang-so">04 › Hằng số</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="thu-cong">Ca test thủ công</h2>
+    <p>Mỗi ca ghi lại: trình duyệt hoặc thiết bị, Đạt/Trượt, ghi chú. Mở DevTools Console trong suốt quá trình test trên máy tính.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Các bước</th><th>Kết quả mong đợi</th></tr></thead>
+        <tbody>
+          <tr><td>MT-01</td><td>Mở <code>index.html</code> bằng cách bấm đúp file (giao thức <code>file://</code>)</td><td>Thấy màn hình bắt đầu: tên game, luật, <code>Kỷ lục: 0</code> ở lần đầu, nút "Bắt đầu". Console không có lỗi hay cảnh báo đỏ.</td></tr>
+          <tr><td>MT-02</td><td>Bấm "Bắt đầu"</td><td>Có đúng 9 ô xếp 3×3. HUD hiện <code>Điểm: 0</code>, <code>Thời gian: 30s</code>, kỷ lục. Chuột đầu tiên hiện sau khoảng nửa giây.</td></tr>
+          <tr><td>MT-03</td><td>Bấm "Bắt đầu" cùng lúc bấm đồng hồ bấm giờ, dừng khi màn hình "Hết giờ!" hiện ra. Làm 3 lần.</td><td>Cả 3 lần đều trong khoảng 29,8–30,2 giây.</td></tr>
+          <tr><td>MT-04</td><td>Quan sát đồng hồ trong lúc chơi</td><td>Giảm đều từng giây 30 → 0, không nhảy cóc, không đứng. Từ <code>5s</code> trở xuống chữ màu đỏ.</td></tr>
+          <tr><td>MT-05</td><td>Không bấm gì, quan sát 20 con chuột</td><td>Mỗi lúc chỉ có 1 chuột thò lên. Không có hai con liên tiếp ở cùng một hang. Mỗi con thò lên khoảng 1 giây. Điểm vẫn là 0.</td></tr>
+          <tr><td>MT-06</td><td>Đập trúng một con</td><td>+1 điểm ngay lập tức. Chuột đổi sang hình choáng, có chữ <code>+1</code> bay lên, chuột lặn xuống. Con kế tiếp hiện sau khoảng nửa giây ở hang khác.</td></tr>
+          <tr><td>MT-07</td><td>Bấm thật nhanh 5–6 lần vào một con chuột</td><td>Chỉ +1.</td></tr>
+          <tr><td>MT-08</td><td>Bấm liên tục vào các ô trống và khoảng trống giữa các ô</td><td>Điểm không đổi, không có lỗi.</td></tr>
+          <tr><td>MT-09</td><td>Ngay khi hiện "Hết giờ!", bấm liên tục vào chỗ bàn chơi cũ</td><td>Điểm trên màn hình kết thúc không đổi.</td></tr>
+          <tr><td>MT-10</td><td>Chơi một lượt, đếm số lần đập trúng bằng tay</td><td>Điểm trên màn hình kết thúc khớp với số đếm.</td></tr>
+          <tr><td>MT-11</td><td>Bấm "Chơi lại" 5 lần liên tiếp thật nhanh, rồi chơi hết lượt</td><td>Điểm về 0, đồng hồ về 30. Không bao giờ có 2 chuột cùng lúc, đồng hồ không chạy nhanh gấp đôi. Lượt dài đúng 30 giây.</td></tr>
+          <tr><td>MT-12</td><td>Chơi đạt điểm cao hơn kỷ lục</td><td>Màn hình kết thúc có dòng "Kỷ lục mới!", kỷ lục bằng điểm vừa đạt.</td></tr>
+          <tr><td>MT-13</td><td>Tải lại trang (F5)</td><td>Màn hình bắt đầu hiện kỷ lục vừa lập.</td></tr>
+          <tr><td>MT-14</td><td>Chơi một lượt thấp hơn kỷ lục, rồi một lượt bằng đúng kỷ lục</td><td>Cả hai lần: không có "Kỷ lục mới!", kỷ lục không đổi.</td></tr>
+          <tr><td>MT-15</td><td>Trong DevTools, sửa <code>localStorage["dapChuot.highScore"]</code> thành <code>"abc"</code>, rồi tải lại</td><td>Hiện <code>Kỷ lục: 0</code>, không có lỗi.</td></tr>
+          <tr><td>MT-16</td><td>Đang chơi ở giây 20, chuyển sang tab khác 5 giây rồi quay lại</td><td>Đồng hồ hiện khoảng <code>15s</code>, lượt tiếp tục bình thường.</td></tr>
+          <tr><td>MT-17</td><td>Đang chơi, chuyển sang tab khác 40 giây rồi quay lại</td><td>Thấy ngay màn hình "Hết giờ!" với điểm trước khi rời tab.</td></tr>
+          <tr><td>MT-18</td><td>Mở bằng cửa sổ ẩn danh (Safari riêng tư)</td><td>Chơi được, không lỗi.</td></tr>
+          <tr><td>MT-19</td><td>Trên điện thoại: chơi cả lượt bằng ngón tay</td><td>Chạm phản hồi ngay. Chạm hai lần nhanh không làm phóng to trang. Nhấn giữ không hiện menu hay bôi đen chữ.</td></tr>
+          <tr><td>MT-20</td><td>DevTools giả lập màn hình rộng 360px (và điện thoại thật nhỏ nhất có)</td><td>Không có thanh cuộn ngang. Cả lưới và HUD nằm gọn trong màn hình. Mỗi ô ≥ 80×80px (đo bằng DevTools).</td></tr>
+          <tr><td>MT-21</td><td>Xoay điện thoại sang ngang</td><td>Lưới vẫn nằm gọn, không cần cuộn mới thấy hàng cuối.</td></tr>
+          <tr><td>MT-22</td><td>Đổi hệ điều hành sang chế độ tối</td><td>Game dùng màu tối từ <code>tokens.css</code>, chữ vẫn dễ đọc.</td></tr>
+          <tr><td>MT-23</td><td>Bật "giảm chuyển động" trong hệ điều hành <span class="tag should">Nên có</span></td><td>Hiệu ứng rút ngắn hoặc tắt, luật chơi không đổi.</td></tr>
+          <tr><td>MT-24</td><td>Trên máy tính, rê chuột lên bàn chơi <span class="tag should">Nên có</span></td><td>Con trỏ là hình búa.</td></tr>
+          <tr><td>MT-25</td><td>Mở <code>tests.html</code></td><td>Mọi test có dấu ✓, không có ✗.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="thiet-bi">Ma trận thiết bị</h2>
+    <p>Bắt buộc chạy hết ca thủ công trên dòng <strong>đậm</strong>. Các dòng còn lại chạy tối thiểu MT-01, 02, 06, 13, 19/20.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Thiết bị</th><th>Trình duyệt</th><th>Nhập</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Máy tính Windows</strong></td><td><strong>Chrome bản mới</strong></td><td>Chuột</td></tr>
+          <tr><td>Máy tính Windows</td><td>Edge, Firefox bản mới</td><td>Chuột</td></tr>
+          <tr><td>Máy Mac</td><td>Safari bản mới</td><td>Chuột/trackpad</td></tr>
+          <tr><td><strong>Điện thoại Android</strong></td><td><strong>Chrome</strong></td><td>Cảm ứng</td></tr>
+          <tr><td>iPhone</td><td>Safari</td><td>Cảm ứng</td></tr>
+          <tr><td>Giả lập 360×640 trong DevTools</td><td>Chrome</td><td>Cảm ứng giả lập</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note warn">
+      <strong>Mở file trên điện thoại</strong>
+      Mở <code>file://</code> trên điện thoại khá bất tiện. Có thể chép thư mục sang máy, hoặc tạm đưa lên một trang tĩnh như GitHub Pages để test. Game không phụ thuộc máy chủ, nên kết quả vẫn tương đương.
+    </div>
+
+    <h2 id="truy-vet">Bảng truy vết</h2>
+    <p>Mỗi tiêu chí hoàn thành trong <code>YEU-CAU.md</code> mục 6 được kiểm bởi ít nhất một ca test:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tiêu chí hoàn thành</th><th>Chức năng</th><th>Tự động</th><th>Thủ công</th></tr></thead>
+        <tbody>
+          <tr><td>Mở file thấy màn hình bắt đầu, Console không lỗi</td><td>F-01</td><td>—</td><td>MT-01</td></tr>
+          <tr><td>Lưới 3×3 = 9 ô, đồng hồ từ 30 về 0</td><td>F-02, F-03</td><td>AT-06, AT-15, AT-26</td><td>MT-02, MT-04</td></tr>
+          <tr><td>Một lượt 30 ± 0,2 giây</td><td>F-03</td><td>AT-14</td><td>MT-03</td></tr>
+          <tr><td>Tối đa 1 chuột, ngẫu nhiên, không lặp ô trước</td><td>F-05</td><td>AT-01 → AT-05</td><td>MT-05</td></tr>
+          <tr><td>Trúng được +1, bấm nhanh nhiều lần chỉ tính 1</td><td>F-06, F-07</td><td>AT-07, AT-08, AT-13</td><td>MT-06, MT-07</td></tr>
+          <tr><td>Bấm ô trống hoặc để chuột lặn không đổi điểm</td><td>F-05, F-06</td><td>AT-09, AT-10</td><td>MT-05, MT-08</td></tr>
+          <tr><td>Sau khi hết giờ, bấm không đổi điểm</td><td>F-09</td><td>AT-11, AT-12, AT-17</td><td>MT-09</td></tr>
+          <tr><td>Màn hình kết thúc hiện đúng điểm</td><td>F-10</td><td>AT-13</td><td>MT-10</td></tr>
+          <tr><td>"Chơi lại" đặt lại sạch, không chạy song song</td><td>F-02, F-09</td><td>AT-06, AT-18, AT-25</td><td>MT-11</td></tr>
+          <tr><td>Kỷ lục lưu, còn sau khi tải lại, chỉ cập nhật khi cao hơn</td><td>F-11</td><td>AT-19 → AT-24</td><td>MT-12 → MT-15, MT-18</td></tr>
+          <tr><td>Chơi bằng cảm ứng, không tràn màn hình 360px</td><td>F-12, F-13</td><td>—</td><td>MT-19 → MT-21</td></tr>
+          <tr><td><em>Quyết định Q1:</em> rời tab thì đồng hồ vẫn chạy</td><td>F-03, F-09</td><td>AT-14</td><td>MT-16, MT-17</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="quy-trinh">Quy trình</h2>
+    <ol>
+      <li>Viết <code>js/logic.js</code> và <code>tests.html</code> trước. Chạy cho tới khi mọi test có dấu ✓.</li>
+      <li>Viết giao diện (<code>index.html</code>, <code>css/game.css</code>, <code>js/game.js</code>).</li>
+      <li>Chạy toàn bộ ca thủ công trên Chrome máy tính và điện thoại Android, ghi kết quả.</li>
+      <li>Sửa lỗi. Lỗi logic thì thêm một ca tự động tái hiện lỗi trước khi sửa.</li>
+      <li>Chạy ca rút gọn trên các trình duyệt còn lại trong ma trận.</li>
+      <li>Hoàn thành khi mọi tiêu chí trong bảng truy vết đều Đạt.</li>
+    </ol>
+    <h3>Mẫu ghi kết quả</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Thiết bị / trình duyệt</th><th>Ngày</th><th>Kết quả</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>MT-03</td><td>Windows · Chrome</td><td>…</td><td>Đạt / Trượt</td><td>30,05 s · 29,96 s · 30,11 s</td></tr>
+          <tr><td>…</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pager" aria-label="Trang trước và sau">
+      <a href="04-quy-tac-du-lieu.html"><span>‹ Trước</span>04 · Quy tắc &amp; dữ liệu</a>
+      <a class="next" href="index.html"><span>Về ›</span>Mục lục</a>
+    </nav>
+  </div>
+</main>
+
+<footer><div class="container">Đập Chuột · Tài liệu đặc tả · Giao diện theo <code>design/tokens.css</code></div></footer>
+</body>
+</html>

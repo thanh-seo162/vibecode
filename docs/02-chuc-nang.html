@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chức năng · Đập Chuột</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<nav class="nav" aria-label="Tài liệu">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">Đập Chuột · Tài liệu</a>
+    <a href="01-tong-quan.html">Tổng quan</a>
+    <a href="02-chuc-nang.html" aria-current="page">Chức năng</a>
+    <a href="03-man-hinh.html">Màn hình</a>
+    <a href="04-quy-tac-du-lieu.html">Quy tắc &amp; dữ liệu</a>
+    <a href="05-ke-hoach-test.html">Kế hoạch test</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <p class="eyebrow">02 · Chức năng</p>
+    <h1>Đặc tả chức năng</h1>
+    <p class="lede">Mỗi chức năng có một mã số (F-xx) để dễ đối chiếu với màn hình, quy tắc và ca test.</p>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <ul class="toc">
+      <li><a href="#danh-sach">Danh sách chức năng</a></li>
+      <li><a href="#luat">Luật chơi</a></li>
+      <li><a href="#luong">Luồng một lượt</a></li>
+      <li><a href="#nhap">Xử lý bấm/chạm</a></li>
+      <li><a href="#bien">Trường hợp biên</a></li>
+    </ul>
+
+    <h2 id="danh-sach">Danh sách chức năng</h2>
+    <p><span class="tag must">Bắt buộc</span> phải có để hoàn thành. <span class="tag should">Nên có</span> làm nếu không tốn nhiều công.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Chức năng</th><th>Mô tả</th><th>Mức</th></tr></thead>
+        <tbody>
+          <tr><td>F-01</td><td>Màn hình bắt đầu</td><td>Hiện tên game, luật trong 1–2 dòng, kỷ lục hiện tại (chưa có thì là 0) và nút "Bắt đầu".</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-02</td><td>Bắt đầu lượt</td><td>Bấm "Bắt đầu" hoặc "Chơi lại": điểm về 0, đồng hồ về 30, chuyển sang màn hình chơi, đồng hồ chạy ngay.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-03</td><td>Đồng hồ đếm ngược</td><td>Đếm lùi từ 30 về 0, cập nhật từng giây, tính theo mốc thời gian thực. Sai số không quá ±0,2 giây.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-04</td><td>Cảnh báo sắp hết giờ</td><td>Khi thời gian hiển thị từ 5 giây trở xuống, chữ thời gian chuyển màu đỏ (<code>--color-danger</code>).</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-05</td><td>Chuột xuất hiện</td><td>Tối đa 1 chuột mỗi lúc, ở một hang ngẫu nhiên khác hang vừa rồi, thò lên trong 0,8–1,2 giây rồi tự lặn.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-06</td><td>Đập chuột</td><td>Bấm trúng chuột đang thò lên được +1 điểm. Chuột đổi sang hình bị choáng, lặn xuống ngay, có chữ <code>+1</code> bay lên.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-07</td><td>Chống tính điểm hai lần</td><td>Mỗi con chuột chỉ tính điểm một lần. Bấm vào con đang lặn hoặc vừa bị đập không được tính.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-08</td><td>Bảng điểm (HUD)</td><td>Thanh trên cùng hiện <code>Điểm: N</code>, <code>Thời gian: Ns</code> và <code>Kỷ lục: N</code>. Điểm cập nhật ngay sau mỗi lần đập trúng.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-09</td><td>Kết thúc lượt</td><td>Khi đồng hồ về 0: chuột đang thò lên biến mất, mọi hẹn giờ dừng, mọi cú bấm sau đó bị bỏ qua, chuyển sang màn hình kết thúc.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-10</td><td>Màn hình kết thúc</td><td>Hiện "Hết giờ!", điểm vừa đạt (chữ to), kỷ lục, dòng "Kỷ lục mới!" nếu vừa phá kỷ lục, và nút "Chơi lại".</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-11</td><td>Lưu kỷ lục</td><td>Lưu vào <code>localStorage</code>. Chỉ ghi khi điểm mới <em>lớn hơn hẳn</em> kỷ lục cũ. Vẫn còn sau khi tải lại trang.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-12</td><td>Nhập bằng chuột và cảm ứng</td><td>Dùng Pointer Events. Chạm trên điện thoại không bị trễ, không phóng to trang khi chạm hai lần.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-13</td><td>Giao diện co giãn</td><td>Lưới vừa màn hình từ rộng 360px tới máy tính, mỗi ô tối thiểu 80×80px.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-14</td><td>Con trỏ hình búa</td><td>Trên máy tính, con trỏ trên bàn chơi là hình búa vẽ bằng SVG.</td><td><span class="tag should">Nên có</span></td></tr>
+          <tr><td>F-15</td><td>Giảm chuyển động</td><td>Khi người dùng bật "giảm chuyển động" trong hệ điều hành, hiệu ứng được rút ngắn hoặc tắt, luật chơi không đổi.</td><td><span class="tag should">Nên có</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="luat">Luật chơi chi tiết</h2>
+    <ol>
+      <li><strong>Bắt đầu:</strong> bấm "Bắt đầu" thì đồng hồ 30 giây bắt đầu chạy ngay ở thời điểm bấm.</li>
+      <li><strong>Chuột đầu tiên</strong> xuất hiện sau một khoảng nghỉ ngẫu nhiên 0,3–0,5 giây <em>(quyết định Q3)</em>.</li>
+      <li><strong>Một chuột mỗi lúc:</strong> không bao giờ có hai chuột cùng thò lên hoặc cùng đang có hiệu ứng.</li>
+      <li><strong>Vị trí:</strong> hang ngẫu nhiên trong 9 hang, khác hang của con ngay trước đó. Mỗi hang còn lại có cùng xác suất 1/8.</li>
+      <li><strong>Thời gian thò lên:</strong> ngẫu nhiên 0,8–1,2 giây, sau đó chuột tự lặn xuống. Không được điểm, không bị trừ điểm.</li>
+      <li><strong>Khoảng nghỉ:</strong> sau khi chuột tự lặn hoặc bị đập, con tiếp theo xuất hiện sau 0,3–0,5 giây.</li>
+      <li><strong>Đập trúng</strong> chuột đang thò lên: +1 điểm, chuột lặn xuống ngay, bắt đầu khoảng nghỉ.</li>
+      <li><strong>Một lần mỗi con:</strong> bấm thêm vào con vừa bị đập hoặc đang lặn không được tính.</li>
+      <li><strong>Bấm trượt</strong> (ô trống, khoảng trống giữa các ô) không làm thay đổi điểm.</li>
+      <li><strong>Hết giờ:</strong> khi còn 0 giây, lượt kết thúc ngay. Chuột biến mất, cú bấm từ lúc đó trở đi không được tính. Không có chuột mới nào xuất hiện nếu khoảng nghỉ kéo dài quá thời điểm hết giờ.</li>
+      <li><strong>Rời tab:</strong> đồng hồ vẫn chạy <em>(quyết định Q1)</em>. Quay lại sau khi đã hết giờ thì thấy ngay màn hình kết thúc với điểm đã đạt.</li>
+      <li><strong>Chơi lại:</strong> bắt đầu lượt mới hoàn toàn. Mọi hẹn giờ của lượt cũ bị huỷ.</li>
+    </ol>
+
+    <h2 id="luong">Luồng một lượt chơi</h2>
+    <figure class="diagram-box">
+      <svg viewBox="0 0 860 300" role="img" aria-label="Vòng lặp chuột: nghỉ, thò lên, rồi bị đập hoặc tự lặn, quay lại nghỉ; hết giờ thì kết thúc">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" class="d-arrow"/>
+          </marker>
+        </defs>
+        <rect class="d-node accent" x="20" y="120" width="140" height="64" rx="14"/>
+        <text class="d-text" x="90" y="148" text-anchor="middle">Bấm Bắt đầu</text>
+        <text class="d-sub" x="90" y="168" text-anchor="middle">đồng hồ chạy</text>
+
+        <rect class="d-node" x="230" y="120" width="140" height="64" rx="14"/>
+        <text class="d-text" x="300" y="148" text-anchor="middle">Nghỉ</text>
+        <text class="d-sub" x="300" y="168" text-anchor="middle">0,3–0,5 s</text>
+
+        <rect class="d-node" x="440" y="120" width="140" height="64" rx="14"/>
+        <text class="d-text" x="510" y="148" text-anchor="middle">Chuột thò lên</text>
+        <text class="d-sub" x="510" y="168" text-anchor="middle">0,8–1,2 s</text>
+
+        <rect class="d-node" x="660" y="30" width="180" height="64" rx="14"/>
+        <text class="d-text" x="750" y="58" text-anchor="middle">Bị đập: +1</text>
+        <text class="d-sub" x="750" y="78" text-anchor="middle">hình choáng, lặn ngay</text>
+
+        <rect class="d-node" x="660" y="210" width="180" height="64" rx="14"/>
+        <text class="d-text" x="750" y="238" text-anchor="middle">Tự lặn xuống</text>
+        <text class="d-sub" x="750" y="258" text-anchor="middle">không đổi điểm</text>
+
+        <path class="d-line" d="M160 152H226" marker-end="url(#ar)"/>
+        <path class="d-line" d="M370 152H436" marker-end="url(#ar)"/>
+        <path class="d-line" d="M580 140L656 76" marker-end="url(#ar)"/>
+        <path class="d-line" d="M580 164L656 228" marker-end="url(#ar)"/>
+        <path class="d-line" d="M750 30V12H300V116" marker-end="url(#ar)"/>
+        <path class="d-line" d="M750 274V292H300V188" marker-end="url(#ar)"/>
+        <text class="d-sub" x="525" y="28" text-anchor="middle">hang kế tiếp ≠ hang vừa rồi</text>
+      </svg>
+      <figcaption>Vòng lặp chạy cho tới khi đồng hồ về 0. Lúc đó, dù đang ở bước nào, lượt cũng dừng ngay và chuyển sang màn hình kết thúc.</figcaption>
+    </figure>
+
+    <h2 id="nhap">Xử lý bấm/chạm</h2>
+    <ul>
+      <li>Nghe sự kiện <code>pointerdown</code> (không dùng <code>click</code>) để phản hồi ngay khi chạm, không chờ nhấc tay.</li>
+      <li>Vùng bấm là <strong>cả ô hang</strong>, không chỉ hình con chuột, để dễ chạm trên điện thoại. Bấm vào ô đang có chuột thò lên là trúng.</li>
+      <li>Bàn chơi đặt <code>touch-action: manipulation</code> để chạm hai lần không phóng to trang. Thẻ viewport không chặn phóng to toàn trang, để giữ khả năng truy cập.</li>
+      <li>Tắt chọn chữ và menu nhấn giữ trên bàn chơi (<code>user-select: none</code>, <code>-webkit-touch-callout: none</code>).</li>
+      <li>Cú bấm chỉ được tính khi cùng lúc: lượt đang chạy, chuột ở trạng thái <em>thò lên</em>, và ô được bấm là ô có chuột.</li>
+      <li>Hỗ trợ bàn phím (nên có): các ô là <code>&lt;button&gt;</code>, có thể Tab tới và bấm Enter hoặc Space.</li>
+    </ul>
+
+    <h2 id="bien">Trường hợp biên</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tình huống</th><th>Hành vi đúng</th></tr></thead>
+        <tbody>
+          <tr><td>Bấm nhanh 5 lần vào cùng một con chuột</td><td>Chỉ +1. Ngay sau cú đầu, chuột chuyển sang trạng thái bị đập.</td></tr>
+          <tr><td>Bấm đúng lúc chuột bắt đầu lặn</td><td>Không tính. Chuột chỉ đập được khi đang ở trạng thái thò lên.</td></tr>
+          <tr><td>Chạm hai ngón cùng lúc vào hai ô</td><td>Mỗi cú chạm xử lý riêng. Ô trống không được điểm, ô có chuột +1 nếu chuột đang thò lên.</td></tr>
+          <tr><td>Bấm vào bàn chơi đúng thời điểm 0 giây</td><td>Điều kiện là <code>bây giờ &lt; thời điểm hết giờ</code>. Tới đúng 0 thì không tính.</td></tr>
+          <tr><td>Khoảng nghỉ chưa xong mà đã hết giờ</td><td>Không cho chuột mới xuất hiện.</td></tr>
+          <tr><td>Bấm "Chơi lại" liên tục rất nhanh</td><td>Chỉ có một lượt chạy. Lượt cũ bị huỷ hết, không có hai đồng hồ hay hai chuột.</td></tr>
+          <tr><td>Rời tab 10 giây rồi quay lại</td><td>Đồng hồ đã trôi 10 giây. Lượt tiếp tục với thời gian còn lại đúng.</td></tr>
+          <tr><td>Rời tab tới quá 30 giây</td><td>Quay lại thấy màn hình kết thúc. Kỷ lục được cập nhật nếu cần.</td></tr>
+          <tr><td>Trình duyệt chặn <code>localStorage</code> (chế độ riêng tư…)</td><td>Game vẫn chơi được, kỷ lục chỉ giữ trong phiên. Không hiện lỗi.</td></tr>
+          <tr><td>Giá trị kỷ lục đã lưu bị hỏng (chữ, số âm…)</td><td>Coi như 0, sẽ được ghi đè ở lần phá kỷ lục kế tiếp.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pager" aria-label="Trang trước và sau">
+      <a href="01-tong-quan.html"><span>‹ Trước</span>01 · Tổng quan</a>
+      <a class="next" href="03-man-hinh.html"><span>Tiếp theo ›</span>03 · Màn hình</a>
+    </nav>
+  </div>
+</main>
+
+<footer><div class="container">Đập Chuột · Tài liệu đặc tả · Giao diện theo <code>design/tokens.css</code></div></footer>
+</body>
+</html>

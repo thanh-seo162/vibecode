@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quy tắc &amp; dữ liệu · Đập Chuột</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<nav class="nav" aria-label="Tài liệu">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">Đập Chuột · Tài liệu</a>
+    <a href="01-tong-quan.html">Tổng quan</a>
+    <a href="02-chuc-nang.html">Chức năng</a>
+    <a href="03-man-hinh.html">Màn hình</a>
+    <a href="04-quy-tac-du-lieu.html" aria-current="page">Quy tắc &amp; dữ liệu</a>
+    <a href="05-ke-hoach-test.html">Kế hoạch test</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <p class="eyebrow">04 · Quy tắc &amp; dữ liệu</p>
+    <h1>Quy tắc nghiệp vụ &amp; dữ liệu</h1>
+    <p class="lede">Các con số, trạng thái và cách lưu trữ chính xác, đủ để viết code và viết test mà không phải đoán.</p>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <ul class="toc">
+      <li><a href="#hang-so">Hằng số</a></li>
+      <li><a href="#trang-thai">Trạng thái game</a></li>
+      <li><a href="#chuot">Trạng thái chuột</a></li>
+      <li><a href="#du-lieu">Dữ liệu một lượt</a></li>
+      <li><a href="#thoi-gian">Tính thời gian</a></li>
+      <li><a href="#ngau-nhien">Chọn hang ngẫu nhiên</a></li>
+      <li><a href="#diem">Tính điểm</a></li>
+      <li><a href="#ky-luc">Lưu kỷ lục</a></li>
+      <li><a href="#roi-tab">Rời tab</a></li>
+      <li><a href="#huy">Huỷ lượt cũ</a></li>
+      <li><a href="#logic">Hàm logic</a></li>
+    </ul>
+
+    <h2 id="hang-so">Hằng số</h2>
+    <p>Gom vào một đối tượng <code>CONFIG</code> trong <code>js/logic.js</code>, không viết số cứng rải rác trong code.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tên</th><th>Giá trị</th><th>Ý nghĩa</th></tr></thead>
+        <tbody>
+          <tr><td><code>GRID_SIZE</code></td><td>3</td><td>Lưới 3×3</td></tr>
+          <tr><td><code>HOLE_COUNT</code></td><td>9</td><td><code>GRID_SIZE × GRID_SIZE</code>, hang đánh số 0–8 từ trái sang phải, trên xuống dưới</td></tr>
+          <tr><td><code>ROUND_MS</code></td><td>30000</td><td>Độ dài một lượt (ms)</td></tr>
+          <tr><td><code>UP_MIN_MS</code> / <code>UP_MAX_MS</code></td><td>800 / 1200</td><td>Thời gian chuột thò lên</td></tr>
+          <tr><td><code>GAP_MIN_MS</code> / <code>GAP_MAX_MS</code></td><td>300 / 500</td><td>Khoảng nghỉ giữa hai con, kể cả trước con đầu tiên</td></tr>
+          <tr><td><code>HIT_SHOW_MS</code></td><td>200</td><td>Thời gian hiện hình bị choáng (chỉ là hiệu ứng)</td></tr>
+          <tr><td><code>WARN_SECONDS</code></td><td>5</td><td>Thời gian hiển thị ≤ giá trị này thì chữ đỏ</td></tr>
+          <tr><td><code>POINTS_PER_HIT</code></td><td>1</td><td>Điểm mỗi lần đập trúng</td></tr>
+          <tr><td><code>STORAGE_KEY</code></td><td><code>"dapChuot.highScore"</code></td><td>Khoá lưu kỷ lục trong <code>localStorage</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Giá trị ngẫu nhiên trong khoảng [min, max] được lấy đều: <code>min + Math.random() × (max − min)</code>.</p>
+
+    <h2 id="trang-thai">Trạng thái game</h2>
+    <figure class="diagram-box">
+      <svg viewBox="0 0 760 200" role="img" aria-label="Ba trạng thái: start sang playing khi bấm Bắt đầu, playing sang ended khi hết giờ, ended quay lại playing khi bấm Chơi lại">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" class="d-arrow"/>
+          </marker>
+        </defs>
+        <rect class="d-node" x="20" y="70" width="160" height="64" rx="14"/>
+        <text class="d-text" x="100" y="98" text-anchor="middle">start</text>
+        <text class="d-sub" x="100" y="118" text-anchor="middle">màn hình bắt đầu</text>
+
+        <rect class="d-node accent" x="300" y="70" width="160" height="64" rx="14"/>
+        <text class="d-text" x="380" y="98" text-anchor="middle">playing</text>
+        <text class="d-sub" x="380" y="118" text-anchor="middle">đang chơi</text>
+
+        <rect class="d-node" x="580" y="70" width="160" height="64" rx="14"/>
+        <text class="d-text" x="660" y="98" text-anchor="middle">ended</text>
+        <text class="d-sub" x="660" y="118" text-anchor="middle">màn hình kết thúc</text>
+
+        <path class="d-line" d="M180 102H296" marker-end="url(#ar2)"/>
+        <text class="d-sub" x="238" y="92" text-anchor="middle">Bắt đầu</text>
+        <path class="d-line" d="M460 102H576" marker-end="url(#ar2)"/>
+        <text class="d-sub" x="518" y="92" text-anchor="middle">hết giờ</text>
+        <path class="d-line" d="M660 134V176H380V138" marker-end="url(#ar2)"/>
+        <text class="d-sub" x="520" y="168" text-anchor="middle">Chơi lại</text>
+      </svg>
+      <figcaption>Chỉ có 3 trạng thái, không có trạng thái tạm dừng (quyết định Q1). Từ <code>ended</code> không quay về <code>start</code>.</figcaption>
+    </figure>
+
+    <h2 id="chuot">Trạng thái chuột</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Trạng thái</th><th>Ý nghĩa</th><th>Bấm vào có được điểm?</th><th>Chuyển sang</th></tr></thead>
+        <tbody>
+          <tr><td><code>hidden</code></td><td>Không có chuột trên bàn (đang nghỉ)</td><td>Không</td><td><code>up</code> khi hết khoảng nghỉ (nếu còn giờ)</td></tr>
+          <tr><td><code>up</code></td><td>Chuột đang thò lên ở hang <code>hole</code></td><td><strong>Có, +1</strong></td><td><code>hit</code> khi bị đập · <code>hidden</code> khi hết thời gian thò lên</td></tr>
+          <tr><td><code>hit</code></td><td>Vừa bị đập, đang hiện hình choáng rồi lặn</td><td>Không</td><td><code>hidden</code> sau hiệu ứng</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note decision">
+      <strong>Khoảng nghỉ tính từ lúc nào?</strong>
+      Khoảng nghỉ 0,3–0,5 giây bắt đầu <em>ngay lúc</em> chuột bị đập hoặc bắt đầu tự lặn, không chờ hiệu ứng choáng hay lặn xong. Hiệu ứng (≤ 350ms) chạy song song trong lúc nghỉ, nên con mới có thể hiện ở hang khác trong khi con cũ còn đang lặn ở hang của nó. Về luật, lúc đó chỉ có một chuột ở trạng thái <code>up</code>.
+    </div>
+
+    <h2 id="du-lieu">Dữ liệu một lượt</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Trường</th><th>Kiểu</th><th>Giá trị đầu lượt</th><th>Mô tả</th></tr></thead>
+        <tbody>
+          <tr><td><code>phase</code></td><td><code>"start" | "playing" | "ended"</code></td><td><code>"playing"</code></td><td>Trạng thái game</td></tr>
+          <tr><td><code>roundId</code></td><td>số nguyên</td><td>tăng 1 mỗi lượt</td><td>Dùng để bỏ qua hẹn giờ của lượt cũ</td></tr>
+          <tr><td><code>score</code></td><td>số nguyên ≥ 0</td><td>0</td><td>Điểm lượt hiện tại</td></tr>
+          <tr><td><code>startAt</code></td><td>số (ms)</td><td><code>performance.now()</code> lúc bấm</td><td>Mốc bắt đầu</td></tr>
+          <tr><td><code>endAt</code></td><td>số (ms)</td><td><code>startAt + ROUND_MS</code></td><td>Mốc hết giờ</td></tr>
+          <tr><td><code>mouse.state</code></td><td><code>"hidden" | "up" | "hit"</code></td><td><code>"hidden"</code></td><td>Trạng thái chuột</td></tr>
+          <tr><td><code>mouse.hole</code></td><td>0–8 hoặc <code>null</code></td><td><code>null</code></td><td>Hang chuột đang ở</td></tr>
+          <tr><td><code>lastHole</code></td><td>0–8 hoặc <code>null</code></td><td><code>null</code></td><td>Hang của con trước, để không lặp lại</td></tr>
+          <tr><td><code>highScore</code></td><td>số nguyên ≥ 0</td><td>đọc từ bộ nhớ</td><td>Kỷ lục trước lượt này</td></tr>
+          <tr><td><code>isNewRecord</code></td><td>boolean</td><td><code>false</code></td><td>Đặt khi kết thúc lượt</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Ở con chuột đầu tiên mỗi lượt, <code>lastHole = null</code> nên cả 9 hang đều có thể được chọn.</p>
+
+    <h2 id="thoi-gian">Tính thời gian</h2>
+    <ul>
+      <li>Dùng <code>performance.now()</code> (đồng hồ đơn điệu, không bị ảnh hưởng khi đổi giờ hệ thống). Không cộng dồn <code>setInterval</code>.</li>
+      <li>Thời gian còn lại: <code>remainingMs = max(0, endAt − now)</code>.</li>
+      <li>Số giây hiển thị: <code>Math.ceil(remainingMs / 1000)</code>. Ví dụ còn 29.001 ms thì hiện <code>30s</code>, còn 4.200 ms thì hiện <code>5s</code> (đỏ), còn 0 thì hiện <code>0s</code>.</li>
+      <li>Vòng cập nhật màn hình dùng <code>requestAnimationFrame</code>. Mỗi khung hình tính lại <code>remainingMs</code>. Khi về 0 thì gọi kết thúc lượt.</li>
+      <li>Thêm một <code>setTimeout(endRound, ROUND_MS)</code> dự phòng, vì <code>requestAnimationFrame</code> không chạy khi tab bị ẩn.</li>
+      <li>Kết thúc lượt chỉ chạy một lần, dù được gọi từ vòng khung hình, từ hẹn giờ dự phòng hay từ sự kiện quay lại tab.</li>
+      <li>Hẹn giờ thò lên và nghỉ của chuột dùng <code>setTimeout</code>. Sai lệch vài chục ms là chấp nhận được, vì luật chỉ yêu cầu khoảng 0,8–1,2 giây.</li>
+    </ul>
+
+    <h2 id="ngau-nhien">Chọn hang ngẫu nhiên</h2>
+    <p>Hàm <code>pickHole(lastHole, rand)</code>:</p>
+    <ol>
+      <li>Nếu <code>lastHole</code> là <code>null</code>: trả về <code>floor(rand() × 9)</code>.</li>
+      <li>Ngược lại: lấy <code>k = floor(rand() × 8)</code>. Nếu <code>k ≥ lastHole</code> thì <code>k = k + 1</code>. Trả về <code>k</code>.</li>
+    </ol>
+    <p>Cách này luôn ra một hang khác <code>lastHole</code>, mỗi hang còn lại có xác suất đúng 1/8, và không cần vòng lặp thử lại. Tham số <code>rand</code> mặc định là <code>Math.random</code>, được truyền vào để test có thể dùng hàm ngẫu nhiên cố định.</p>
+
+    <h2 id="diem">Tính điểm</h2>
+    <p>Hàm <code>tryHit(state, hole, now)</code> trả về <code>true</code> và cộng điểm khi và chỉ khi <strong>tất cả</strong> điều kiện sau đúng:</p>
+    <ol>
+      <li><code>state.phase === "playing"</code></li>
+      <li><code>now &lt; state.endAt</code></li>
+      <li><code>state.mouse.state === "up"</code></li>
+      <li><code>hole === state.mouse.hole</code></li>
+    </ol>
+    <p>Khi trúng: <code>score += POINTS_PER_HIT</code>, <code>mouse.state = "hit"</code>. Lệnh này chạy đồng bộ, nên cú bấm thứ hai vào cùng con chuột thấy <code>"hit"</code> và bị bỏ qua. Không có trường hợp nào làm điểm giảm.</p>
+
+    <h2 id="ky-luc">Lưu kỷ lục</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mục</th><th>Quy tắc</th></tr></thead>
+        <tbody>
+          <tr><td>Nơi lưu</td><td><code>localStorage["dapChuot.highScore"]</code></td></tr>
+          <tr><td>Định dạng</td><td>Chuỗi số nguyên thập phân, ví dụ <code>"25"</code></td></tr>
+          <tr><td>Đọc</td><td><code>loadHighScore()</code>: đọc chuỗi, <code>parseInt(…, 10)</code>. Nếu không phải số nguyên ≥ 0 (null, rỗng, <code>"abc"</code>, <code>"-3"</code>, <code>"NaN"</code>) thì trả về 0.</td></tr>
+          <tr><td>Khi nào ghi</td><td>Một lần, lúc kết thúc lượt, và chỉ khi <code>score &gt; highScore</code>. Bằng nhau thì không ghi và không báo "Kỷ lục mới!".</td></tr>
+          <tr><td>Điểm 0</td><td>Lượt 0 điểm không bao giờ là kỷ lục mới, kể cả khi kỷ lục cũ là 0.</td></tr>
+          <tr><td>Lỗi bộ nhớ</td><td>Mọi lệnh đọc và ghi bọc trong <code>try/catch</code>. Nếu lỗi thì dùng giá trị trong bộ nhớ tạm, game vẫn chạy bình thường.</td></tr>
+          <tr><td>Xoá kỷ lục</td><td>Không có chức năng này trong game (quyết định Q4).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="roi-tab">Rời tab hoặc khoá màn hình</h2>
+    <div class="note decision">
+      <strong>Quyết định Q1: đồng hồ vẫn chạy</strong>
+      Vì thời gian tính theo mốc <code>endAt</code>, đồng hồ tự đúng khi quay lại, không cần lưu gì thêm.
+    </div>
+    <ul>
+      <li>Nghe sự kiện <code>visibilitychange</code>. Khi tab hiện lại: nếu <code>now ≥ endAt</code> thì gọi kết thúc lượt ngay, nếu không thì cập nhật HUD.</li>
+      <li>Trình duyệt có thể làm chậm <code>setTimeout</code> khi tab ẩn. Chuột có thể thò lên lâu hơn bình thường khi không ai nhìn, điều này chấp nhận được, vì không ai bấm được lúc đó.</li>
+      <li>Khi tab hiện lại mà chuột đã thò lên quá <code>UP_MAX_MS</code>, cho chuột lặn ngay và bắt đầu khoảng nghỉ.</li>
+    </ul>
+
+    <h2 id="huy">Huỷ lượt cũ</h2>
+    <p>Để "Chơi lại" không bao giờ để sót chuột hay đồng hồ của lượt trước:</p>
+    <ol>
+      <li>Mỗi lượt có một <code>roundId</code> mới. Mọi hàm hẹn giờ nhận <code>roundId</code> lúc tạo, và không làm gì nếu khác <code>state.roundId</code> hiện tại.</li>
+      <li>Khi kết thúc lượt hoặc bắt đầu lượt mới: <code>clearTimeout</code> mọi hẹn giờ đang giữ, <code>cancelAnimationFrame</code> vòng khung hình.</li>
+      <li>Xoá trạng thái hiển thị của cả 9 ô (bỏ class chuột, xoá chữ +1 còn sót).</li>
+    </ol>
+    <p class="muted">Bước 1 là lớp bảo vệ chính. Bước 2 giúp tiết kiệm tài nguyên. Chỉ cần một trong hai sai là test "Chơi lại" sẽ phát hiện.</p>
+
+    <h2 id="logic">Hàm logic trong js/logic.js</h2>
+    <p>Đây là các hàm thuần (không đụng DOM, không tự gọi hẹn giờ), để <code>tests.html</code> kiểm tra được. Chúng được gắn vào một biến toàn cục <code>DapChuot</code>, vì không dùng ES module.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Hàm</th><th>Đầu vào → đầu ra</th></tr></thead>
+        <tbody>
+          <tr><td><code>createRound(now, highScore, prevRoundId)</code></td><td>→ đối tượng trạng thái lượt mới (xem bảng dữ liệu)</td></tr>
+          <tr><td><code>pickHole(lastHole, rand)</code></td><td>→ số 0–8, khác <code>lastHole</code></td></tr>
+          <tr><td><code>randomBetween(min, max, rand)</code></td><td>→ số trong [min, max]</td></tr>
+          <tr><td><code>showMouse(state, hole)</code></td><td>Đặt <code>mouse = {state:"up", hole}</code>, <code>lastHole = hole</code></td></tr>
+          <tr><td><code>tryHit(state, hole, now)</code></td><td>→ <code>true</code>/<code>false</code>, cộng điểm nếu trúng</td></tr>
+          <tr><td><code>hideMouse(state)</code></td><td>Đặt <code>mouse = {state:"hidden", hole:null}</code></td></tr>
+          <tr><td><code>isCurrentRound(state, id)</code></td><td>→ <code>id === state.roundId</code>. Mọi hàm hẹn giờ gọi hàm này trước khi làm gì.</td></tr>
+          <tr><td><code>remainingMs(state, now)</code></td><td>→ <code>max(0, endAt − now)</code></td></tr>
+          <tr><td><code>displaySeconds(ms)</code></td><td>→ <code>Math.ceil(ms / 1000)</code></td></tr>
+          <tr><td><code>isWarning(seconds)</code></td><td>→ <code>seconds ≤ WARN_SECONDS</code></td></tr>
+          <tr><td><code>finishRound(state)</code></td><td>Đặt <code>phase = "ended"</code>, ẩn chuột, tính <code>isNewRecord</code>. Gọi lần thứ hai không đổi gì.</td></tr>
+          <tr><td><code>parseHighScore(raw)</code></td><td>→ số nguyên ≥ 0 (giá trị lỗi thì là 0)</td></tr>
+          <tr><td><code>loadHighScore(storage)</code> / <code>saveHighScore(storage, n)</code></td><td>Đọc/ghi có <code>try/catch</code>. <code>storage</code> được truyền vào để test dùng bộ nhớ giả.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pager" aria-label="Trang trước và sau">
+      <a href="03-man-hinh.html"><span>‹ Trước</span>03 · Màn hình</a>
+      <a class="next" href="05-ke-hoach-test.html"><span>Tiếp theo ›</span>05 · Kế hoạch test</a>
+    </nav>
+  </div>
+</main>
+
+<footer><div class="container">Đập Chuột · Tài liệu đặc tả · Giao diện theo <code>design/tokens.css</code></div></footer>
+</body>
+</html>

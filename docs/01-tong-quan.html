@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tổng quan · Đập Chuột</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<nav class="nav" aria-label="Tài liệu">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">Đập Chuột · Tài liệu</a>
+    <a href="01-tong-quan.html" aria-current="page">Tổng quan</a>
+    <a href="02-chuc-nang.html">Chức năng</a>
+    <a href="03-man-hinh.html">Màn hình</a>
+    <a href="04-quy-tac-du-lieu.html">Quy tắc &amp; dữ liệu</a>
+    <a href="05-ke-hoach-test.html">Kế hoạch test</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <p class="eyebrow">01 · Tổng quan</p>
+    <h1>Tổng quan dự án</h1>
+    <p class="lede">Một mini game nhỏ, mở file là chơi: chuột thò lên, bấm thật nhanh, ghi điểm trong 30 giây.</p>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <ul class="toc">
+      <li><a href="#muc-tieu">Mục tiêu</a></li>
+      <li><a href="#nguoi-choi">Người chơi</a></li>
+      <li><a href="#tom-tat">Tóm tắt luật</a></li>
+      <li><a href="#quyet-dinh">Quyết định đã chốt</a></li>
+      <li><a href="#pham-vi">Phạm vi</a></li>
+      <li><a href="#ky-thuat">Kỹ thuật</a></li>
+      <li><a href="#hoan-thanh">Tiêu chí hoàn thành</a></li>
+    </ul>
+
+    <h2 id="muc-tieu">Mục tiêu</h2>
+    <ul>
+      <li>Làm một game phản xạ đơn giản, chơi trọn một lượt trong 30 giây.</li>
+      <li>Chạy trên trình duyệt máy tính và điện thoại, <strong>không cần đăng nhập, không cần máy chủ, không cần cài đặt</strong>.</li>
+      <li>Code gọn, dễ đọc, dễ mở rộng sau này (mức độ khó, chuột đặc biệt, âm thanh).</li>
+    </ul>
+
+    <h2 id="nguoi-choi">Người chơi</h2>
+    <p>Bất kỳ ai có trình duyệt: chơi giải trí vài phút trên điện thoại hoặc máy tính. Không cần hướng dẫn dài, luật phải hiểu được trong 1–2 dòng.</p>
+
+    <h2 id="tom-tat">Tóm tắt luật chơi</h2>
+    <ol>
+      <li>Bấm <strong>"Bắt đầu"</strong> thì đồng hồ 30 giây chạy ngay.</li>
+      <li>Bàn chơi có <strong>3×3 = 9 hang</strong>. Mỗi lúc có tối đa <strong>1 con chuột</strong>, thò lên ở một hang ngẫu nhiên, không trùng hang vừa rồi.</li>
+      <li>Đập trúng chuột được <strong>+1 điểm</strong>. Bấm trượt hoặc để chuột lặn đi không bị trừ điểm.</li>
+      <li>Hết giờ thì lượt dừng ngay, hiện điểm và kỷ lục. Kỷ lục được lưu trong trình duyệt.</li>
+    </ol>
+    <p class="muted">Luật đầy đủ nằm ở <a href="02-chuc-nang.html#luat">02 · Chức năng › Luật chơi</a>.</p>
+
+    <h2 id="quyet-dinh">Quyết định đã chốt</h2>
+    <p>Đây là những điểm <code>YEU-CAU.md</code> còn để ngỏ, đã được chốt qua phỏng vấn:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Câu hỏi</th><th>Quyết định</th><th>Ảnh hưởng</th></tr></thead>
+        <tbody>
+          <tr><td>Q1</td><td>Rời tab hoặc khoá màn hình khi đang chơi</td><td><strong>Đồng hồ vẫn chạy.</strong> Không có tạm dừng.</td><td>Khi quay lại, nếu đã quá 30 giây thì lượt kết thúc ngay và hiện màn hình kết thúc. Xem <a href="04-quy-tac-du-lieu.html#roi-tab">04 › Rời tab</a>.</td></tr>
+          <tr><td>Q2</td><td>Hình con chuột và hang</td><td><strong>Vẽ bằng SVG/CSS tối giản</strong>, không dùng file ảnh hay emoji.</td><td>Có ít nhất 2 hình chuột: bình thường và bị choáng. Xem <a href="03-man-hinh.html#hinh-ve">03 › Hình vẽ</a>.</td></tr>
+          <tr><td>Q3</td><td>Lúc chuột đầu tiên xuất hiện</td><td><strong>Sau khoảng nghỉ 0,3–0,5 giây</strong> kể từ khi bấm "Bắt đầu", giống khoảng nghỉ giữa các con.</td><td>Đồng hồ vẫn bắt đầu chạy ngay khi bấm.</td></tr>
+          <tr><td>Q4</td><td>Có nút xoá kỷ lục không</td><td><strong>Không.</strong> Giữ đúng phạm vi.</td><td>Muốn xoá thì xoá dữ liệu trang trong cài đặt trình duyệt.</td></tr>
+          <tr><td>Q5</td><td>Cách test</td><td><strong>Test thủ công, kèm trang <code>tests.html</code></strong> tự động kiểm tra phần logic.</td><td>Logic phải tách khỏi phần giao diện để test được. Xem <a href="05-ke-hoach-test.html">05 · Kế hoạch test</a>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="pham-vi">Phạm vi</h2>
+    <h3>Trong phạm vi phiên bản đầu</h3>
+    <ul>
+      <li>3 màn hình: bắt đầu, chơi, kết thúc.</li>
+      <li>Lưới 3×3, một con chuột mỗi lúc, mỗi lượt 30 giây, +1 điểm mỗi lần đập trúng.</li>
+      <li>Hiệu ứng chuột thò lên, lặn xuống, bị choáng và chữ <code>+1</code> bay lên.</li>
+      <li>5 giây cuối, đồng hồ chuyển màu đỏ.</li>
+      <li>Kỷ lục lưu trong <code>localStorage</code>, kèm thông báo "Kỷ lục mới!".</li>
+      <li>Chơi được bằng chuột và cảm ứng, giao diện co giãn từ màn hình rộng 360px trở lên.</li>
+    </ul>
+    <h3>Ngoài phạm vi</h3>
+    <ul>
+      <li>Nhiều mức độ khó, chuột tăng tốc theo thời gian.</li>
+      <li>Chuột đặc biệt (chuột vàng, bom trừ điểm…).</li>
+      <li>Âm thanh và nhạc nền.</li>
+      <li>Bảng xếp hạng online, nhiều người chơi.</li>
+      <li>Tạm dừng, nút xoá kỷ lục, đếm ngược 3-2-1 (theo quyết định Q1, Q3, Q4).</li>
+    </ul>
+
+    <h2 id="ky-thuat">Kỹ thuật</h2>
+    <ul>
+      <li>HTML, CSS và JavaScript thuần. Không thư viện, không bước build.</li>
+      <li>Chạy khi mở thẳng <code>index.html</code> (giao thức <code>file://</code>) trên Chrome, Edge, Firefox và Safari bản mới.</li>
+      <li>Vì <code>file://</code> chặn <code>&lt;script type="module"&gt;</code> trên Chrome, code dùng <strong>script thường</strong>, không dùng ES module.</li>
+      <li>Giao diện dùng token trong <code>design/tokens.css</code>.</li>
+    </ul>
+    <h3>Cấu trúc thư mục dự kiến</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Đường dẫn</th><th>Nội dung</th></tr></thead>
+        <tbody>
+          <tr><td><code>index.html</code></td><td>Trang game, chứa 3 màn hình.</td></tr>
+          <tr><td><code>css/game.css</code></td><td>Giao diện game, nạp <code>design/tokens.css</code>.</td></tr>
+          <tr><td><code>js/logic.js</code></td><td>Logic thuần, không đụng tới DOM: chọn hang, tính điểm, tính giờ, đọc/ghi kỷ lục.</td></tr>
+          <tr><td><code>js/game.js</code></td><td>Nối logic với giao diện: hẹn giờ, sự kiện bấm, vẽ màn hình.</td></tr>
+          <tr><td><code>tests.html</code></td><td>Trang test tự động cho <code>js/logic.js</code>.</td></tr>
+          <tr><td><code>design/</code>, <code>docs/</code></td><td>Design system và bộ tài liệu này.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="hoan-thanh">Tiêu chí hoàn thành</h2>
+    <p>Lấy từ <code>YEU-CAU.md</code> mục 6. Mỗi tiêu chí có ca test tương ứng trong <a href="05-ke-hoach-test.html#truy-vet">05 › Bảng truy vết</a>.</p>
+    <ul class="checklist">
+      <li>Mở <code>index.html</code> là thấy màn hình bắt đầu, Console không có lỗi.</li>
+      <li>Bấm "Bắt đầu" thì hiện lưới đúng 3×3 = 9 ô, đồng hồ bắt đầu từ 30 và đếm lùi về 0.</li>
+      <li>Một lượt kéo dài 30 giây (sai số ±0,2 giây).</li>
+      <li>Mỗi lúc có tối đa 1 chuột, vị trí ngẫu nhiên và không lặp lại ô ngay trước đó.</li>
+      <li>Đập trúng được đúng +1 điểm. Bấm nhanh nhiều lần vào cùng một con chỉ tính 1 điểm.</li>
+      <li>Bấm ô trống hoặc để chuột lặn đi không làm thay đổi điểm.</li>
+      <li>Sau khi hết giờ, bấm vào bàn chơi không làm thay đổi điểm.</li>
+      <li>Màn hình kết thúc hiện đúng điểm của lượt vừa chơi.</li>
+      <li>"Chơi lại" đặt điểm về 0 và đồng hồ về 30, không còn chuột hay bộ đếm nào của lượt cũ chạy song song.</li>
+      <li>Kỷ lục được lưu và vẫn đúng sau khi tải lại trang, chỉ cập nhật khi điểm mới cao hơn.</li>
+      <li>Chơi được bằng cảm ứng trên điện thoại, lưới không tràn khỏi màn hình rộng 360px.</li>
+      <li><em>Bổ sung:</em> <code>tests.html</code> chạy hết, không có test nào đỏ.</li>
+    </ul>
+
+    <nav class="pager" aria-label="Trang trước và sau">
+      <a href="index.html"><span>‹ Mục lục</span>Mục lục</a>
+      <a class="next" href="02-chuc-nang.html"><span>Tiếp theo ›</span>02 · Chức năng</a>
+    </nav>
+  </div>
+</main>
+
+<footer><div class="container">Đập Chuột · Tài liệu đặc tả · Giao diện theo <code>design/tokens.css</code></div></footer>
+</body>
+</html>
