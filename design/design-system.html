@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-text);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--color-link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- Bố cục ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 10;
+    height: var(--nav-height);
+    background: var(--color-nav);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+  .nav-inner {
+    max-width: var(--container-max); height: 100%; margin: 0 auto; padding: 0 var(--gutter);
+    display: flex; align-items: center; gap: var(--space-6);
+    font-size: var(--text-caption); letter-spacing: var(--tracking-caption);
+    overflow-x: auto; white-space: nowrap; scrollbar-width: none;
+  }
+  .nav-inner a { color: rgba(255,255,255,.8); }
+  .nav-inner a:hover { color: #fff; text-decoration: none; }
+  .nav-brand { color: #fff; font-weight: var(--font-weight-semibold); margin-right: auto; }
+  .theme-toggle {
+    background: none; border: 0; color: rgba(255,255,255,.8); cursor: pointer;
+    font: inherit; padding: 0;
+  }
+
+  .container { max-width: var(--container-max); margin: 0 auto; padding: 0 var(--gutter); }
+  section { padding: var(--space-24) 0; }
+  section.alt { background: var(--color-bg-alt); }
+
+  .hero { background: var(--color-bg-inverse); color: var(--color-text-inverse); text-align: center; padding: var(--space-30) 0; }
+  .hero h1 {
+    margin: 0;
+    font-family: var(--font-display); font-weight: var(--font-weight-semibold);
+    font-size: var(--text-display); line-height: var(--leading-display); letter-spacing: var(--tracking-display);
+  }
+  .hero p {
+    margin: var(--space-3) auto var(--space-8); max-width: 34ch;
+    font-family: var(--font-display);
+    font-size: var(--text-title-3); line-height: var(--leading-title-3); letter-spacing: var(--tracking-title-3);
+    color: #a1a1a6;
+  }
+  .hero .actions { justify-content: center; }
+
+  .section-eyebrow { color: var(--color-text-tertiary); font-size: var(--text-callout); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-2); }
+  .section-title {
+    margin: 0 0 var(--space-12);
+    font-family: var(--font-display); font-weight: var(--font-weight-semibold);
+    font-size: var(--text-headline); line-height: var(--leading-headline); letter-spacing: var(--tracking-headline);
+  }
+  .group-title { font-size: var(--text-subhead); font-weight: var(--font-weight-semibold); margin: var(--space-12) 0 var(--space-5); }
+  .group-title:first-of-type { margin-top: 0; }
+
+  /* ---------- Bảng màu ---------- */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-4); }
+  .swatch { background: var(--color-bg-elevated); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .swatch-chip { height: 88px; border-bottom: 1px solid var(--color-divider); }
+  .swatch-meta { padding: var(--space-3) var(--space-4) var(--space-4); }
+  .swatch-name { font-size: var(--text-callout); font-weight: var(--font-weight-semibold); display: block; }
+  .swatch-var, .swatch-hex { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary); display: block; letter-spacing: 0; }
+
+  /* ---------- Kiểu chữ ---------- */
+  .type-row {
+    display: grid; grid-template-columns: 160px 1fr; gap: var(--space-6); align-items: baseline;
+    padding: var(--space-6) 0; border-bottom: 1px solid var(--color-divider);
+  }
+  .type-row:last-child { border-bottom: 0; }
+  .type-label { font-size: var(--text-caption); color: var(--color-text-secondary); line-height: 1.5; }
+  .type-label code { font-family: var(--font-mono); display: block; letter-spacing: 0; }
+  .type-sample { margin: 0; overflow-wrap: anywhere; }
+  .t-hero     { font-family: var(--font-display); font-weight: 600; font-size: var(--text-hero);     line-height: var(--leading-hero);     letter-spacing: var(--tracking-hero); }
+  .t-display  { font-family: var(--font-display); font-weight: 600; font-size: var(--text-display);  line-height: var(--leading-display);  letter-spacing: var(--tracking-display); }
+  .t-headline { font-family: var(--font-display); font-weight: 600; font-size: var(--text-headline); line-height: var(--leading-headline); letter-spacing: var(--tracking-headline); }
+  .t-title-1  { font-family: var(--font-display); font-weight: 600; font-size: var(--text-title-1);  line-height: var(--leading-title-1);  letter-spacing: var(--tracking-title-1); }
+  .t-title-2  { font-family: var(--font-display); font-weight: 600; font-size: var(--text-title-2);  line-height: var(--leading-title-2);  letter-spacing: var(--tracking-title-2); }
+  .t-title-3  { font-family: var(--font-display); font-weight: 600; font-size: var(--text-title-3);  line-height: var(--leading-title-3);  letter-spacing: var(--tracking-title-3); }
+  .t-subhead  { font-family: var(--font-display); font-weight: 400; font-size: var(--text-subhead);  line-height: var(--leading-subhead);  letter-spacing: var(--tracking-subhead); }
+  .t-body-lg  { font-family: var(--font-display); font-size: var(--text-body-lg); line-height: var(--leading-body-lg); letter-spacing: var(--tracking-body-lg); }
+  .t-body     { font-size: var(--text-body);    line-height: var(--leading-body);    letter-spacing: var(--tracking-body); }
+  .t-callout  { font-size: var(--text-callout); line-height: var(--leading-callout); letter-spacing: var(--tracking-callout); }
+  .t-caption  { font-size: var(--text-caption); line-height: var(--leading-caption); letter-spacing: var(--tracking-caption); color: var(--color-text-secondary); }
+
+  /* ---------- Khoảng cách & bo góc ---------- */
+  .scale { display: flex; flex-direction: column; gap: var(--space-3); }
+  .scale-row { display: grid; grid-template-columns: 110px 56px 1fr; gap: var(--space-4); align-items: center; font-size: var(--text-callout); }
+  .scale-row code { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); letter-spacing: 0; }
+  .scale-bar { height: 12px; background: var(--color-accent); border-radius: 3px; }
+  .radii { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-4); }
+  .radius-box {
+    aspect-ratio: 1; background: var(--color-bg-elevated); border: 1px solid var(--color-border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-size: var(--text-callout); font-weight: var(--font-weight-semibold);
+  }
+  .radius-box code { font-family: var(--font-mono); font-size: 11px; font-weight: 400; color: var(--color-text-secondary); letter-spacing: 0; }
+
+  /* ---------- Nút bấm ---------- */
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+    min-height: 36px; padding: 8px 18px;
+    font-family: var(--font-text); font-size: var(--text-body); line-height: 1.18; letter-spacing: var(--tracking-body);
+    font-weight: var(--font-weight-regular);
+    border: 1px solid transparent; border-radius: var(--radius-pill);
+    cursor: pointer; text-decoration: none;
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+  }
+  .btn:hover { text-decoration: none; }
+  .btn:focus-visible { outline: 4px solid var(--color-focus); outline-offset: 1px; }
+  .btn-primary { background: var(--color-accent); color: var(--color-text-on-accent); }
+  .btn-primary:hover { background: var(--color-accent-hover); }
+  .btn-primary:active { background: var(--color-accent-active); }
+  .btn-secondary { background: transparent; color: var(--color-link); border-color: var(--color-link); }
+  .btn-secondary:hover { background: var(--color-link); color: #fff; }
+  .btn-neutral { background: var(--color-text); color: var(--color-bg); }
+  .btn-neutral:hover { opacity: .85; }
+  .btn-sm { min-height: 28px; padding: 4px 12px; font-size: var(--text-callout); letter-spacing: var(--tracking-callout); }
+  .btn-lg { min-height: 48px; padding: 12px 24px; font-size: var(--text-body-lg); }
+  .btn[disabled] { opacity: .42; cursor: not-allowed; pointer-events: none; }
+  .link-arrow { font-size: var(--text-body-lg); }
+  .link-arrow::after { content: " ›"; }
+
+  /* ---------- Ô nhập ---------- */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-6); }
+  .field { display: flex; flex-direction: column; gap: var(--space-2); }
+  .field label { font-size: var(--text-callout); font-weight: var(--font-weight-semibold); }
+  .input, .select, .textarea {
+    width: 100%; min-height: 52px; padding: 14px 16px;
+    font-family: var(--font-text); font-size: var(--text-body); letter-spacing: var(--tracking-body); color: var(--color-text);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+    transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .textarea { min-height: 112px; resize: vertical; }
+  .input::placeholder, .textarea::placeholder { color: var(--color-text-tertiary); }
+  .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 4px var(--color-focus); }
+  .input.is-error { border-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 5%, var(--color-bg-elevated)); }
+  .hint { font-size: var(--text-caption); color: var(--color-text-secondary); }
+  .hint.error { color: var(--color-danger); }
+  .search { position: relative; }
+  .search .input { padding-left: 44px; border-radius: var(--radius-pill); background: var(--color-bg-alt); border-color: transparent; }
+  .search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--color-text-tertiary); }
+  .check { display: flex; align-items: center; gap: var(--space-3); font-size: var(--text-body); }
+  .check input { width: 20px; height: 20px; accent-color: var(--color-accent); }
+
+  /* ---------- Thẻ ---------- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-5); }
+  .card {
+    background: var(--color-bg-elevated); border-radius: var(--radius-lg);
+    padding: var(--space-8); display: flex; flex-direction: column; gap: var(--space-3);
+    transition: transform var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+  }
+  .card:hover { transform: scale(1.01); box-shadow: var(--shadow-md); }
+  .card-eyebrow { font-size: var(--text-caption); font-weight: var(--font-weight-semibold); color: var(--color-warning); text-transform: none; }
+  .card h3 { margin: 0; font-family: var(--font-display); font-size: var(--text-title-3); line-height: var(--leading-title-3); font-weight: 600; letter-spacing: var(--tracking-title-3); }
+  .card p { margin: 0; color: var(--color-text-secondary); font-size: var(--text-callout); line-height: 1.43; }
+  .card .actions { margin-top: auto; padding-top: var(--space-4); gap: var(--space-5); }
+  .card-visual {
+    height: 140px; border-radius: var(--radius-md); margin-bottom: var(--space-2);
+    background: linear-gradient(135deg, #e8e8ed, #f5f5f7);
+  }
+  .card-visual.blue { background: linear-gradient(135deg, #2997ff 0%, #0071e3 100%); }
+  .card-visual.dark { background: linear-gradient(135deg, #1d1d1f 0%, #424245 100%); }
+  .card-dark { background: var(--color-bg-inverse-alt); color: var(--color-text-inverse); }
+  .card-dark p { color: #a1a1a6; }
+  .card-dark a { color: var(--color-link-inverse); }
+  .card-tile {
+    border-radius: var(--radius-xl); text-align: center; padding: var(--space-12) var(--space-8);
+    align-items: center; grid-column: 1 / -1;
+  }
+  .card-tile h3 { font-size: var(--text-title-1); line-height: var(--leading-title-1); }
+  .card-tile p { font-size: var(--text-body-lg); }
+  .card-tile .actions { justify-content: center; }
+
+  footer { background: var(--color-bg-alt); color: var(--color-text-secondary); font-size: var(--text-caption); padding: var(--space-6) 0; border-top: 1px solid var(--color-divider); }
+
+  @media (max-width: 734px) {
+    section { padding: var(--space-16) 0; }
+    .type-row { grid-template-columns: 1fr; gap: var(--space-2); }
+    .scale-row { grid-template-columns: 90px 44px 1fr; }
+    .card { padding: var(--space-6); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Mục lục">
+  <div class="nav-inner">
+    <span class="nav-brand">Design System</span>
+    <a href="#colors">Màu</a>
+    <a href="#type">Kiểu chữ</a>
+    <a href="#spacing">Khoảng cách</a>
+    <a href="#buttons">Nút</a>
+    <a href="#inputs">Ô nhập</a>
+    <a href="#cards">Thẻ</a>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Đổi giao diện sáng/tối">◐</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <h1>Đơn giản. Rõ ràng.</h1>
+    <p>Bộ quy chuẩn giao diện tối giản, chữ lớn, nhiều khoảng trắng.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="#colors">Bắt đầu xem</a>
+      <a class="link-arrow" href="#type" style="color:var(--color-link-inverse)">Tìm hiểu thêm</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MÀU ============ -->
+<section id="colors" class="alt">
+  <div class="container">
+    <p class="section-eyebrow">01 · Màu sắc</p>
+    <h2 class="section-title">Bảng màu</h2>
+    <div id="palette"></div>
+  </div>
+</section>
+
+<!-- ============ KIỂU CHỮ ============ -->
+<section id="type">
+  <div class="container">
+    <p class="section-eyebrow">02 · Kiểu chữ</p>
+    <h2 class="section-title">Thang cỡ chữ</h2>
+    <div class="type-row"><div class="type-label">Hero<code>--text-hero</code>80 / 600</div><p class="type-sample t-hero">Nhanh hơn.</p></div>
+    <div class="type-row"><div class="type-label">Display<code>--text-display</code>56 / 600</div><p class="type-sample t-display">Mạnh mẽ vượt trội.</p></div>
+    <div class="type-row"><div class="type-label">Headline<code>--text-headline</code>48 / 600</div><p class="type-sample t-headline">Thiết kế tinh gọn</p></div>
+    <div class="type-row"><div class="type-label">Title 1<code>--text-title-1</code>40 / 600</div><p class="type-sample t-title-1">Tiêu đề khối nội dung</p></div>
+    <div class="type-row"><div class="type-label">Title 2<code>--text-title-2</code>32 / 600</div><p class="type-sample t-title-2">Tiêu đề thẻ lớn</p></div>
+    <div class="type-row"><div class="type-label">Title 3<code>--text-title-3</code>24 / 600</div><p class="type-sample t-title-3">Tiêu đề thẻ nhỏ</p></div>
+    <div class="type-row"><div class="type-label">Subhead<code>--text-subhead</code>21 / 400</div><p class="type-sample t-subhead">Dòng phụ đề mô tả ngắn gọn cho tiêu đề phía trên.</p></div>
+    <div class="type-row"><div class="type-label">Body Large<code>--text-body-lg</code>19 / 400</div><p class="type-sample t-body-lg">Đoạn mở đầu nổi bật, dùng cho phần giới thiệu.</p></div>
+    <div class="type-row"><div class="type-label">Body<code>--text-body</code>17 / 400</div><p class="type-sample t-body">Văn bản chính. Câu ngắn, dễ đọc, khoảng cách dòng thoáng để mắt nghỉ giữa các dòng. Tiếng Việt có dấu hiển thị rõ ràng ở mọi cỡ.</p></div>
+    <div class="type-row"><div class="type-label">Callout<code>--text-callout</code>14 / 400</div><p class="type-sample t-callout">Chú thích, nội dung nút và nhãn phụ.</p></div>
+    <div class="type-row"><div class="type-label">Caption<code>--text-caption</code>12 / 400</div><p class="type-sample t-caption">Chú thích nhỏ, chân trang, ghi chú pháp lý.</p></div>
+  </div>
+</section>
+
+<!-- ============ KHOẢNG CÁCH & BO GÓC ============ -->
+<section id="spacing" class="alt">
+  <div class="container">
+    <p class="section-eyebrow">03 · Bố cục</p>
+    <h2 class="section-title">Khoảng cách &amp; bo góc</h2>
+    <h3 class="group-title">Thang khoảng cách (4px)</h3>
+    <div class="scale" id="spaceScale"></div>
+    <h3 class="group-title">Bo góc</h3>
+    <div class="radii" id="radii"></div>
+  </div>
+</section>
+
+<!-- ============ NÚT ============ -->
+<section id="buttons">
+  <div class="container">
+    <p class="section-eyebrow">04 · Thành phần</p>
+    <h2 class="section-title">Nút bấm</h2>
+    <h3 class="group-title">Kiểu</h3>
+    <div class="actions">
+      <button class="btn btn-primary" type="button">Mua ngay</button>
+      <button class="btn btn-secondary" type="button">Tìm hiểu thêm</button>
+      <button class="btn btn-neutral" type="button">Tiếp tục</button>
+      <a class="link-arrow" href="#buttons">Liên kết có mũi tên</a>
+    </div>
+    <h3 class="group-title">Kích thước</h3>
+    <div class="actions">
+      <button class="btn btn-primary btn-sm" type="button">Nhỏ</button>
+      <button class="btn btn-primary" type="button">Mặc định</button>
+      <button class="btn btn-primary btn-lg" type="button">Lớn</button>
+    </div>
+    <h3 class="group-title">Trạng thái</h3>
+    <div class="actions">
+      <button class="btn btn-primary" type="button" disabled>Vô hiệu</button>
+      <button class="btn btn-secondary" type="button" disabled>Vô hiệu</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Ô NHẬP ============ -->
+<section id="inputs" class="alt">
+  <div class="container">
+    <p class="section-eyebrow">05 · Thành phần</p>
+    <h2 class="section-title">Ô nhập</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="f-name">Họ và tên</label>
+        <input class="input" id="f-name" type="text" placeholder="Nguyễn Văn A">
+        <span class="hint">Nhập đúng như trên giấy tờ.</span>
+      </div>
+      <div class="field">
+        <label for="f-email">Email</label>
+        <input class="input is-error" id="f-email" type="email" value="ten@email" aria-invalid="true" aria-describedby="f-email-err">
+        <span class="hint error" id="f-email-err">Địa chỉ email chưa hợp lệ.</span>
+      </div>
+      <div class="field">
+        <label for="f-city">Tỉnh / Thành phố</label>
+        <select class="select" id="f-city">
+          <option>Hà Nội</option><option>TP. Hồ Chí Minh</option><option>Đà Nẵng</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-search">Tìm kiếm</label>
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="5.25" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input class="input" id="f-search" type="search" placeholder="Tìm kiếm">
+        </div>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label for="f-note">Ghi chú</label>
+        <textarea class="textarea" id="f-note" placeholder="Viết vài dòng…"></textarea>
+      </div>
+      <label class="check"><input type="checkbox" checked> Nhận thông báo qua email</label>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THẺ ============ -->
+<section id="cards">
+  <div class="container">
+    <p class="section-eyebrow">06 · Thành phần</p>
+    <h2 class="section-title">Thẻ</h2>
+    <div class="cards" style="background:var(--color-bg-alt);padding:var(--space-5);border-radius:var(--radius-xl)">
+      <article class="card">
+        <div class="card-visual" aria-hidden="true"></div>
+        <span class="card-eyebrow">Mới</span>
+        <h3>Thẻ cơ bản</h3>
+        <p>Nền trắng trên khối xám, bo góc 18px, không viền.</p>
+        <div class="actions"><a href="#cards" class="link-arrow" style="font-size:var(--text-callout)">Xem thêm</a></div>
+      </article>
+      <article class="card">
+        <div class="card-visual blue" aria-hidden="true"></div>
+        <h3>Thẻ có hành động</h3>
+        <p>Kết hợp nút chính và liên kết phụ ở cuối thẻ.</p>
+        <div class="actions">
+          <button class="btn btn-primary btn-sm" type="button">Mua</button>
+          <a href="#cards" class="link-arrow" style="font-size:var(--text-callout)">Tìm hiểu</a>
+        </div>
+      </article>
+      <article class="card card-dark">
+        <div class="card-visual dark" aria-hidden="true"></div>
+        <h3>Thẻ tối</h3>
+        <p>Dùng để tạo nhịp tương phản giữa các thẻ sáng.</p>
+        <div class="actions"><a href="#cards" class="link-arrow" style="font-size:var(--text-callout)">Khám phá</a></div>
+      </article>
+      <article class="card card-tile">
+        <h3>Khối nổi bật</h3>
+        <p>Thẻ rộng toàn hàng, căn giữa, bo góc 28px.</p>
+        <div class="actions">
+          <button class="btn btn-primary" type="button">Bắt đầu</button>
+          <button class="btn btn-secondary" type="button">Tìm hiểu thêm</button>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">Design system tham khảo phong cách tối giản. Mọi token nằm trong <code>tokens.css</code>.</div>
+</footer>
+
+<script>
+  // Bảng màu: lấy giá trị trực tiếp từ tokens.css để luôn khớp
+  const groups = {
+    'Bề mặt': [['Nền', '--color-bg'], ['Nền xen kẽ', '--color-bg-alt'], ['Nền nổi', '--color-bg-elevated'], ['Nền tối', '--color-bg-inverse'], ['Nền tối phụ', '--color-bg-inverse-alt']],
+    'Chữ': [['Chữ chính', '--color-text'], ['Chữ phụ', '--color-text-secondary'], ['Chữ mờ', '--color-text-tertiary'], ['Chữ trên nền tối', '--color-text-inverse']],
+    'Nhấn & liên kết': [['Nhấn', '--color-accent'], ['Nhấn hover', '--color-accent-hover'], ['Liên kết', '--color-link'], ['Liên kết nền tối', '--color-link-inverse']],
+    'Viền & trạng thái': [['Viền', '--color-border'], ['Viền đậm', '--color-border-strong'], ['Phân cách', '--color-divider'], ['Thành công', '--color-success'], ['Cảnh báo', '--color-warning'], ['Lỗi', '--color-danger']]
+  };
+  const root = document.documentElement;
+  const v = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+
+  function renderPalette() {
+    const el = document.getElementById('palette');
+    el.innerHTML = '';
+    for (const [title, items] of Object.entries(groups)) {
+      const h = document.createElement('h3'); h.className = 'group-title'; h.textContent = title; el.appendChild(h);
+      const grid = document.createElement('div'); grid.className = 'swatches';
+      for (const [name, token] of items) {
+        grid.insertAdjacentHTML('beforeend',
+          `<div class="swatch"><div class="swatch-chip" style="background:var(${token})"></div>
+           <div class="swatch-meta"><span class="swatch-name">${name}</span><span class="swatch-var">${token}</span><span class="swatch-hex">${v(token)}</span></div></div>`);
+      }
+      el.appendChild(grid);
+    }
+  }
+
+  const spaces = ['1','2','3','4','5','6','8','10','12','16','20','24','30'];
+  document.getElementById('spaceScale').innerHTML = spaces.map(s =>
+    `<div class="scale-row"><code>--space-${s}</code><span>${v('--space-' + s)}</span><div class="scale-bar" style="width:var(--space-${s})"></div></div>`).join('');
+
+  const radii = [['XS','xs'],['SM','sm'],['MD','md'],['LG','lg'],['XL','xl'],['Pill','pill']];
+  document.getElementById('radii').innerHTML = radii.map(([n, k]) =>
+    `<div class="radius-box" style="border-radius:var(--radius-${k})">${n}<code>--radius-${k}</code><code>${v('--radius-' + k)}</code></div>`).join('');
+
+  // Đổi sáng / tối
+  try { const t = localStorage.getItem('ds-theme'); if (t) root.dataset.theme = t; } catch (e) {}
+  renderPalette();
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('ds-theme', root.dataset.theme); } catch (e) {}
+    renderPalette();
+  });
+</script>
+</body>
+</html>

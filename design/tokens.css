@@ -1,0 +1,149 @@
+/* ==========================================================================
+   Design tokens — phong cách tối giản, lấy cảm hứng từ apple.com/vn
+   (chỉ học phong cách: màu trung tính, chữ lớn đậm vừa, nút dạng viên thuốc,
+   nhiều khoảng trắng; không dùng logo, hình ảnh hay nội dung của Apple).
+   ========================================================================== */
+
+:root {
+  /* ---------- Màu: bề mặt ---------- */
+  --color-bg:              #ffffff;   /* nền chính */
+  --color-bg-alt:          #f5f5f7;   /* nền xen kẽ giữa các khối */
+  --color-bg-elevated:     #ffffff;   /* thẻ nổi trên nền xám */
+  --color-bg-inverse:      #000000;   /* khối tối (hero, banner) */
+  --color-bg-inverse-alt:  #1d1d1f;
+  --color-nav:             rgba(22, 22, 23, 0.8); /* thanh điều hướng mờ */
+
+  /* ---------- Màu: chữ ---------- */
+  --color-text:            #1d1d1f;   /* chữ chính (không dùng đen tuyền) */
+  --color-text-secondary:  #6e6e73;
+  --color-text-tertiary:   #86868b;
+  --color-text-inverse:    #f5f5f7;
+  --color-text-on-accent:  #ffffff;
+
+  /* ---------- Màu: nhấn & liên kết ---------- */
+  --color-accent:          #0071e3;   /* nút chính */
+  --color-accent-hover:    #0077ed;
+  --color-accent-active:   #006edb;
+  --color-link:            #0066cc;   /* liên kết trên nền sáng */
+  --color-link-inverse:    #2997ff;   /* liên kết trên nền tối */
+
+  /* ---------- Màu: đường viền & trạng thái ---------- */
+  --color-border:          #d2d2d7;
+  --color-border-strong:   #86868b;
+  --color-divider:         #e8e8ed;
+  --color-focus:           rgba(0, 125, 250, 0.6);
+  --color-success:         #03a10e;
+  --color-warning:         #b64400;
+  --color-danger:          #e30000;
+
+  /* ---------- Kiểu chữ ---------- */
+  /* SF Pro không cấp phép dùng trên web → dùng font hệ thống,
+     Inter là phương án gần nhất trên Windows/Android. */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter",
+                  "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-text:    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
+                  "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  /* ---------- Cỡ chữ (cỡ / dòng / giãn chữ) ---------- */
+  --text-hero:        80px;  --leading-hero:        1.05;  --tracking-hero:        -0.015em;
+  --text-display:     56px;  --leading-display:     1.07;  --tracking-display:     -0.005em;
+  --text-headline:    48px;  --leading-headline:    1.08;  --tracking-headline:    -0.003em;
+  --text-title-1:     40px;  --leading-title-1:     1.1;   --tracking-title-1:     0;
+  --text-title-2:     32px;  --leading-title-2:     1.125; --tracking-title-2:     0.004em;
+  --text-title-3:     24px;  --leading-title-3:     1.167; --tracking-title-3:     0.009em;
+  --text-subhead:     21px;  --leading-subhead:     1.19;  --tracking-subhead:     0.011em;
+  --text-body-lg:     19px;  --leading-body-lg:     1.21;  --tracking-body-lg:     0.012em;
+  --text-body:        17px;  --leading-body:        1.47;  --tracking-body:        -0.022em;
+  --text-callout:     14px;  --leading-callout:     1.29;  --tracking-callout:     -0.016em;
+  --text-caption:     12px;  --leading-caption:     1.33;  --tracking-caption:     -0.01em;
+
+  /* ---------- Khoảng cách (thang 4px) ---------- */
+  --space-0:    0;
+  --space-1:    4px;
+  --space-2:    8px;
+  --space-3:    12px;
+  --space-4:    16px;
+  --space-5:    20px;
+  --space-6:    24px;
+  --space-8:    32px;
+  --space-10:   40px;
+  --space-12:   48px;
+  --space-16:   64px;
+  --space-20:   80px;
+  --space-24:   96px;
+  --space-30:   120px;  /* khoảng cách giữa các khối lớn */
+
+  --container-max:    980px;   /* độ rộng nội dung chuẩn */
+  --container-wide:   1440px;
+  --gutter:           22px;
+  --nav-height:       44px;
+
+  /* ---------- Bo góc ---------- */
+  --radius-xs:    5px;
+  --radius-sm:    8px;
+  --radius-md:    12px;    /* ô nhập */
+  --radius-lg:    18px;    /* thẻ */
+  --radius-xl:    28px;    /* thẻ lớn, khối nổi bật */
+  --radius-pill:  980px;   /* nút dạng viên thuốc */
+  --radius-round: 50%;
+
+  /* ---------- Đổ bóng (dùng rất tiết chế) ---------- */
+  --shadow-sm:    0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md:    0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg:    0 12px 40px rgba(0, 0, 0, 0.12);
+
+  /* ---------- Chuyển động ---------- */
+  --ease-standard:  cubic-bezier(0.28, 0.11, 0.32, 1);
+  --duration-fast:  150ms;
+  --duration-base:  250ms;
+  --duration-slow:  450ms;
+}
+
+/* ---------- Chế độ tối ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg:             #000000;
+    --color-bg-alt:         #101010;
+    --color-bg-elevated:    #1d1d1f;
+    --color-text:           #f5f5f7;
+    --color-text-secondary: #a1a1a6;
+    --color-text-tertiary:  #86868b;
+    --color-link:           #2997ff;
+    --color-border:         #424245;
+    --color-divider:        #2a2a2c;
+    --shadow-md:            0 4px 24px rgba(0, 0, 0, 0.5);
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg:             #000000;
+  --color-bg-alt:         #101010;
+  --color-bg-elevated:    #1d1d1f;
+  --color-text:           #f5f5f7;
+  --color-text-secondary: #a1a1a6;
+  --color-text-tertiary:  #86868b;
+  --color-link:           #2997ff;
+  --color-border:         #424245;
+  --color-divider:        #2a2a2c;
+  --shadow-md:            0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Cỡ chữ thu nhỏ trên màn hình hẹp ---------- */
+@media (max-width: 734px) {
+  :root {
+    --text-hero:     48px;
+    --text-display:  40px;
+    --text-headline: 32px;
+    --text-title-1:  28px;
+    --text-title-2:  24px;
+    --text-title-3:  21px;
+    --text-subhead:  19px;
+    --space-30:      80px;
+    --gutter:        16px;
+  }
+}
