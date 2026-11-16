@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Đập Chuột</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Hình vẽ dùng chung (SVG nội tuyến, quyết định Q2) -->
+<svg class="defs" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="mouse-normal" viewBox="0 0 100 100">
+      <circle cx="27" cy="32" r="15" style="fill: var(--mouse-body)"/>
+      <circle cx="73" cy="32" r="15" style="fill: var(--mouse-body)"/>
+      <circle cx="27" cy="32" r="8" style="fill: var(--mouse-ear)"/>
+      <circle cx="73" cy="32" r="8" style="fill: var(--mouse-ear)"/>
+      <ellipse cx="50" cy="66" rx="33" ry="38" style="fill: var(--mouse-body)"/>
+      <circle cx="38" cy="58" r="4.5" style="fill: var(--mouse-eye)"/>
+      <circle cx="62" cy="58" r="4.5" style="fill: var(--mouse-eye)"/>
+      <ellipse cx="50" cy="72" rx="5.5" ry="4.5" style="fill: var(--mouse-nose)"/>
+      <g style="stroke: var(--mouse-whisker); stroke-width: 1.5; stroke-linecap: round">
+        <line x1="42" y1="74" x2="22" y2="70"/><line x1="42" y1="77" x2="22" y2="79"/>
+        <line x1="58" y1="74" x2="78" y2="70"/><line x1="58" y1="77" x2="78" y2="79"/>
+      </g>
+    </symbol>
+    <symbol id="mouse-stunned" viewBox="0 0 100 100">
+      <circle cx="27" cy="32" r="15" style="fill: var(--mouse-body)"/>
+      <circle cx="73" cy="32" r="15" style="fill: var(--mouse-body)"/>
+      <circle cx="27" cy="32" r="8" style="fill: var(--mouse-ear)"/>
+      <circle cx="73" cy="32" r="8" style="fill: var(--mouse-ear)"/>
+      <ellipse cx="50" cy="66" rx="33" ry="38" style="fill: var(--mouse-body)"/>
+      <g style="stroke: var(--mouse-eye); stroke-width: 3; stroke-linecap: round">
+        <line x1="34" y1="54" x2="42" y2="62"/><line x1="42" y1="54" x2="34" y2="62"/>
+        <line x1="58" y1="54" x2="66" y2="62"/><line x1="66" y1="54" x2="58" y2="62"/>
+      </g>
+      <ellipse cx="50" cy="72" rx="5.5" ry="4.5" style="fill: var(--mouse-nose)"/>
+      <g style="stroke: var(--mouse-whisker); stroke-width: 1.5; stroke-linecap: round">
+        <line x1="42" y1="74" x2="22" y2="70"/><line x1="42" y1="77" x2="22" y2="79"/>
+        <line x1="58" y1="74" x2="78" y2="70"/><line x1="58" y1="77" x2="78" y2="79"/>
+      </g>
+      <g style="fill: var(--mouse-star)">
+        <path d="M30 4 L32 10 L38 12 L32 14 L30 20 L28 14 L22 12 L28 10 Z"/>
+        <path d="M50 0 L51.6 5 L56.5 6.5 L51.6 8 L50 13 L48.4 8 L43.5 6.5 L48.4 5 Z"/>
+        <path d="M70 4 L72 10 L78 12 L72 14 L70 20 L68 14 L62 12 L68 10 Z"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app">
+
+  <!-- S1 · Màn hình bắt đầu -->
+  <section id="screen-start" class="screen screen-center" aria-labelledby="start-title">
+    <div class="intro-art" aria-hidden="true">
+      <div class="intro-hole"></div>
+      <div class="intro-pit">
+        <svg class="intro-mouse" viewBox="0 0 100 100"><use href="#mouse-normal"/></svg>
+      </div>
+    </div>
+    <h1 id="start-title" class="title-display">Đập Chuột</h1>
+    <p class="rules">Đập trúng chuột được 1 điểm. Bạn có 30 giây!</p>
+    <p class="record">Kỷ lục: <strong id="start-high" class="num">0</strong></p>
+    <button id="btn-start" class="btn btn-primary btn-lg" type="button">Bắt đầu</button>
+  </section>
+
+  <!-- S2 · Màn hình chơi -->
+  <section id="screen-play" class="screen" aria-label="Đang chơi" hidden>
+    <div class="hud">
+      <p class="hud-item" aria-live="polite">Điểm: <span id="hud-score" class="num">0</span></p>
+      <p class="hud-item" id="hud-time-wrap" aria-live="off">Thời gian: <span id="hud-time" class="num">30</span>s</p>
+      <p class="hud-item">Kỷ lục: <span id="hud-high" class="num">0</span></p>
+    </div>
+    <div id="board" class="board" role="group" aria-label="Bàn chơi"></div>
+  </section>
+
+  <!-- S3 · Màn hình kết thúc -->
+  <section id="screen-end" class="screen screen-center" aria-labelledby="end-title" hidden>
+    <h2 id="end-title" class="title-headline">Hết giờ!</h2>
+    <p class="final">
+      <span id="end-score" class="final-score num">0</span>
+      <span class="final-label">điểm</span>
+    </p>
+    <p id="end-new-record" class="new-record" hidden>Kỷ lục mới!</p>
+    <p class="record">Kỷ lục: <strong id="end-high" class="num">0</strong></p>
+    <button id="btn-replay" class="btn btn-primary btn-lg" type="button">Chơi lại</button>
+  </section>
+
+</main>
+
+<!-- Mẫu một ô hang; game.js nhân ra CONFIG.HOLE_COUNT ô -->
+<template id="cell-template">
+  <button class="cell" type="button">
+    <span class="hole" aria-hidden="true"></span>
+    <span class="pit" aria-hidden="true">
+      <span class="mouse">
+        <svg class="mouse-face mouse-face-normal" viewBox="0 0 100 100"><use href="#mouse-normal"/></svg>
+        <svg class="mouse-face mouse-face-stunned" viewBox="0 0 100 100"><use href="#mouse-stunned"/></svg>
+      </span>
+    </span>
+  </button>
+</template>
+
+<script src="logic.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

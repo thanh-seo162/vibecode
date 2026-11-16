@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tests · Đập Chuột</title>
+<link rel="stylesheet" href="../design/tokens.css">
+<style>
+  body { margin: 0; padding: var(--space-8) var(--gutter); background: var(--color-bg); color: var(--color-text);
+         font-family: var(--font-text); font-size: var(--text-body); line-height: var(--leading-body); }
+  main { max-width: var(--container-max); margin: 0 auto; }
+  h1 { font-family: var(--font-display); font-size: var(--text-title-2); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-2); }
+  #summary { font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-6); }
+  #summary.ok { color: var(--color-success); }
+  #summary.fail { color: var(--color-danger); }
+  ol { list-style: none; padding: 0; margin: 0; }
+  li { padding: var(--space-2) 0; border-bottom: 1px solid var(--color-divider); font-size: var(--text-callout); }
+  .pass::before { content: "✓ "; color: var(--color-success); font-weight: var(--font-weight-bold); }
+  .fail::before { content: "✗ "; color: var(--color-danger); font-weight: var(--font-weight-bold); }
+  pre { margin: var(--space-1) 0 0; color: var(--color-danger); font-family: var(--font-mono); font-size: var(--text-caption); white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Test logic · Đập Chuột</h1>
+  <p id="summary">Đang chạy…</p>
+  <ol id="results"></ol>
+</main>
+<script src="logic.js"></script>
+<script>
+(function () {
+  "use strict";
+  var D = window.DapChuot;
+  var C = D.CONFIG;
+  var results = [];
+
+  function test(name, fn) {
+    try { fn(); results.push({ name: name, ok: true }); }
+    catch (e) { results.push({ name: name, ok: false, err: e && e.message ? e.message : String(e) }); }
+  }
+  function eq(actual, expected, msg) {
+    var a = JSON.stringify(actual), b = JSON.stringify(expected);
+    if (a !== b) throw new Error((msg ? msg + ": " : "") + "nhận " + a + ", mong đợi " + b);
+  }
+  function ok(cond, msg) { if (!cond) throw new Error(msg || "điều kiện sai"); }
+  function seq(values) { var i = 0; return function () { return values[i++ % values.length]; }; }
+  function fakeStorage(initial) {
+    var data = {};
+    if (initial !== undefined) data[C.STORAGE_KEY] = initial;
+    return {
+      writes: 0,
+      data: data,
+      getItem: function (k) { return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null; },
+      setItem: function (k, v) { this.writes++; data[k] = String(v); }
+    };
+  }
+  function upAt(hole, now) {
+    var s = D.createRound(now || 0, 0, 0);
+    D.showMouse(s, hole);
+    return s;
+  }
+  // Mô phỏng game.js lúc kết thúc lượt: finishRound rồi ghi nếu có kỷ lục mới.
+  function endAndSave(state, storage) {
+    D.finishRound(state);
+    if (state.isNewRecord) D.saveHighScore(storage, state.score);
+  }
+
+  test("AT-01 pickHole(null) với rand = 0 và 0,999 → 0 và 8", function () {
+    eq(D.pickHole(null, seq([0])), 0);
+    eq(D.pickHole(null, seq([0.999])), 8);
+  });
+
+  test("AT-02 pickHole(h) 10.000 lần mỗi h: không trả về h, luôn trong 0–8", function () {
+    for (var h = 0; h < 9; h++) {
+      for (var i = 0; i < 10000; i++) {
+        var r = D.pickHole(h, Math.random);
+        ok(r !== h, "trả về đúng lastHole " + h);
+        ok(r >= 0 && r <= 8 && r === Math.floor(r), "ngoài 0–8: " + r);
+      }
+    }
+  });
+
+  test("AT-03 lastHole = 4, k = 0…7 → 0,1,2,3,5,6,7,8", function () {
+    var out = [];
+    for (var k = 0; k < 8; k++) out.push(D.pickHole(4, seq([(k + 0.5) / 8])));
+    eq(out, [0, 1, 2, 3, 5, 6, 7, 8]);
+  });
+
+  test("AT-04 phân bố 80.000 lần với lastHole = 0: mỗi hang 1–8 là 12,5% ± 1%", function () {
+    var n = 80000, count = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    for (var i = 0; i < n; i++) count[D.pickHole(0, Math.random)]++;
+    eq(count[0], 0, "hang 0");
+    for (var h = 1; h <= 8; h++) {
+      var p = count[h] / n * 100;
+      ok(p >= 11.5 && p <= 13.5, "hang " + h + " chiếm " + p.toFixed(2) + "%");
+    }
+  });
+
+  test("AT-05 randomBetween(800, 1200) với rand 0 / 0,5 / 0,999", function () {
+    eq(D.randomBetween(800, 1200, seq([0])), 800);
+    eq(D.randomBetween(800, 1200, seq([0.5])), 1000);
+    var hi = D.randomBetween(800, 1200, seq([0.999]));
+    ok(hi > 1199 && hi <= 1200, "gần 1200: " + hi);
+    for (var i = 0; i < 1000; i++) {
+      var v = D.randomBetween(800, 1200, Math.random);
+      ok(v >= 800 && v <= 1200, "ngoài khoảng: " + v);
+    }
+  });
+
+  test("AT-06 createRound(1000, 7, 3)", function () {
+    var s = D.createRound(1000, 7, 3);
+    eq(s.score, 0, "score"); eq(s.endAt, 31000, "endAt"); eq(s.phase, "playing", "phase");
+    eq(s.roundId, 4, "roundId"); eq(s.mouse.state, "hidden", "mouse"); eq(s.mouse.hole, null, "mouse.hole");
+    eq(s.lastHole, null, "lastHole"); eq(s.highScore, 7, "highScore"); eq(s.isNewRecord, false, "isNewRecord");
+    eq(s.startAt, 1000, "startAt");
+  });
+
+  test("AT-07 chuột up ở hang 2, tryHit hang 2 trước khi hết giờ", function () {
+    var s = upAt(2);
+    eq(D.tryHit(s, 2, 5000), true);
+    eq(s.score, 1); eq(s.mouse.state, "hit");
+  });
+
+  test("AT-08 tryHit 5 lần liên tiếp vào cùng con chuột → chỉ lần đầu true", function () {
+    var s = upAt(2), out = [];
+    for (var i = 0; i < 5; i++) out.push(D.tryHit(s, 2, 5000 + i));
+    eq(out, [true, false, false, false, false]); eq(s.score, 1);
+  });
+
+  test("AT-09 chuột up ở hang 2, bấm hang 5", function () {
+    var s = upAt(2);
+    eq(D.tryHit(s, 5, 5000), false); eq(s.score, 0); eq(s.mouse.state, "up");
+  });
+
+  test("AT-10 bấm khi chuột hidden hoặc hit", function () {
+    var s = D.createRound(0, 0, 0);
+    eq(D.tryHit(s, 0, 100), false, "hidden"); eq(s.score, 0);
+    s = upAt(3); s.mouse.state = "hit";
+    eq(D.tryHit(s, 3, 100), false, "hit"); eq(s.score, 0);
+  });
+
+  test("AT-11 bấm đúng hang với now = endAt và endAt + 1", function () {
+    var s = upAt(1);
+    eq(D.tryHit(s, 1, s.endAt), false, "now = endAt");
+    eq(D.tryHit(s, 1, s.endAt + 1), false, "now = endAt + 1");
+    eq(s.score, 0);
+  });
+
+  test("AT-12 bấm đúng hang khi phase = ended", function () {
+    var s = upAt(1); s.phase = "ended";
+    eq(D.tryHit(s, 1, 100), false); eq(s.score, 0);
+  });
+
+  test("AT-13 đập trúng 3 con liên tiếp → điểm 3", function () {
+    var s = D.createRound(0, 0, 0), holes = [2, 7, 4];
+    for (var i = 0; i < 3; i++) {
+      D.showMouse(s, holes[i]);
+      eq(D.tryHit(s, holes[i], 1000 * (i + 1)), true, "con " + (i + 1));
+      D.hideMouse(s);
+    }
+    eq(s.score, 3);
+  });
+
+  test("AT-14 remainingMs tại startAt, +12.345, endAt, endAt+500", function () {
+    var s = D.createRound(1000, 0, 0);
+    eq([D.remainingMs(s, 1000), D.remainingMs(s, 1000 + 12345), D.remainingMs(s, s.endAt), D.remainingMs(s, s.endAt + 500)],
+       [30000, 17655, 0, 0]);
+  });
+
+  test("AT-15 displaySeconds", function () {
+    eq([30000, 29001, 29000, 4200, 1, 0].map(D.displaySeconds), [30, 30, 29, 5, 1, 0]);
+  });
+
+  test("AT-16 isWarning", function () {
+    eq([6, 5, 1, 0].map(D.isWarning), [false, true, true, true]);
+  });
+
+  test("AT-17 finishRound khi chuột đang up", function () {
+    var s = upAt(5);
+    D.finishRound(s);
+    eq(s.phase, "ended"); eq(s.mouse.state, "hidden"); eq(s.mouse.hole, null);
+  });
+
+  test("AT-18 gọi finishRound hai lần", function () {
+    var s = D.createRound(0, 2, 0); s.score = 5;
+    D.finishRound(s);
+    var snap = JSON.stringify(s);
+    eq(s.isNewRecord, true);
+    D.finishRound(s);
+    eq(JSON.stringify(s), snap, "lần hai làm đổi trạng thái");
+  });
+
+  test("AT-19 điểm 10, kỷ lục 7 → isNewRecord true, lưu \"10\"", function () {
+    var st = fakeStorage("7"), s = D.createRound(0, D.loadHighScore(st), 0);
+    s.score = 10; endAndSave(s, st);
+    eq(s.isNewRecord, true); eq(st.data[C.STORAGE_KEY], "10");
+  });
+
+  test("AT-20 điểm 7, kỷ lục 7 → isNewRecord false, không ghi", function () {
+    var st = fakeStorage("7"), s = D.createRound(0, D.loadHighScore(st), 0);
+    s.score = 7; endAndSave(s, st);
+    eq(s.isNewRecord, false); eq(st.writes, 0);
+  });
+
+  test("AT-21 điểm 3, kỷ lục 7 → isNewRecord false, bộ nhớ vẫn \"7\"", function () {
+    var st = fakeStorage("7"), s = D.createRound(0, D.loadHighScore(st), 0);
+    s.score = 3; endAndSave(s, st);
+    eq(s.isNewRecord, false); eq(st.data[C.STORAGE_KEY], "7"); eq(st.writes, 0);
+  });
+
+  test("AT-22 điểm 0, kỷ lục 0 → isNewRecord false", function () {
+    var st = fakeStorage(), s = D.createRound(0, D.loadHighScore(st), 0);
+    endAndSave(s, st);
+    eq(s.isNewRecord, false); eq(st.writes, 0);
+  });
+
+  test("AT-23 parseHighScore", function () {
+    eq([null, "", "abc", "-3", "12", "12.7"].map(D.parseHighScore), [0, 0, 0, 0, 12, 12]);
+  });
+
+  test("AT-24 bộ nhớ ném lỗi: load trả về 0, save không ném lỗi", function () {
+    var bad = {
+      getItem: function () { throw new Error("SecurityError"); },
+      setItem: function () { throw new Error("QuotaExceededError"); }
+    };
+    eq(D.loadHighScore(bad), 0);
+    var threw = false;
+    try { D.saveHighScore(bad, 5); } catch (e) { threw = true; }
+    eq(threw, false, "saveHighScore ném lỗi");
+  });
+
+  test("AT-25 hẹn giờ của lượt A chạy trên trạng thái lượt B → B không đổi", function () {
+    var a = D.createRound(0, 0, 0);
+    var b = D.createRound(500, 0, a.roundId);
+    var idA = a.roundId;
+    var snap = JSON.stringify(b);
+    // Hàm hẹn giờ mẫu, giống game.js: kiểm tra roundId trước khi làm gì.
+    function timerCallback(state, id) {
+      if (!D.isCurrentRound(state, id)) return;
+      D.showMouse(state, 4);
+      D.tryHit(state, 4, state.startAt + 1);
+    }
+    eq(D.isCurrentRound(b, idA), false, "isCurrentRound(B, idA)");
+    eq(D.isCurrentRound(b, b.roundId), true, "isCurrentRound(B, idB)");
+    timerCallback(b, idA);
+    eq(JSON.stringify(b), snap, "trạng thái B bị đổi");
+  });
+
+  test("AT-26 CONFIG đúng 04 › Hằng số", function () {
+    eq(C, {
+      GRID_SIZE: 3, HOLE_COUNT: 9, ROUND_MS: 30000, UP_MIN_MS: 800, UP_MAX_MS: 1200,
+      GAP_MIN_MS: 300, GAP_MAX_MS: 500, HIT_SHOW_MS: 200, WARN_SECONDS: 5,
+      POINTS_PER_HIT: 1, STORAGE_KEY: "dapChuot.highScore"
+    });
+    eq(C.HOLE_COUNT, C.GRID_SIZE * C.GRID_SIZE, "HOLE_COUNT = GRID_SIZE²");
+  });
+
+  // ---------- Hiển thị kết quả ----------
+  var list = document.getElementById("results");
+  var failed = 0;
+  results.forEach(function (r) {
+    var li = document.createElement("li");
+    li.className = r.ok ? "pass" : "fail";
+    li.textContent = r.name;
+    if (!r.ok) {
+      failed++;
+      var pre = document.createElement("pre");
+      pre.textContent = r.err;
+      li.appendChild(pre);
+    }
+    list.appendChild(li);
+  });
+  var summary = document.getElementById("summary");
+  var passed = results.length - failed;
+  summary.textContent = "Đạt " + passed + "/" + results.length + (failed ? " · Trượt " + failed : "");
+  summary.className = failed ? "fail" : "ok";
+  document.title = failed ? "✗ " + failed + " lỗi" : "✓ " + passed + "/" + results.length;
+})();
+</script>
+</body>
+</html>
