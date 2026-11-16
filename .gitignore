@@ -11,3 +11,12 @@ Desktop.ini
 
 # Claude Code (cấu hình cục bộ)
 .claude/settings.local.json
+
+# Node.js
+node_modules/
+npm-debug.log*
+*.log
+
+# Biến môi trường (không commit bí mật)
+.env
+.env.*

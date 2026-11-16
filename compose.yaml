@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    image: dap-chuot:latest
+    container_name: dap-chuot-app
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+    restart: unless-stopped

@@ -1,0 +1,22 @@
+# Chỉ cần server/, app/, design/ để build image; bỏ phần còn lại.
+.git
+.gitignore
+.dockerignore
+.claude
+.vscode
+.idea
+docs
+YEU-CAU.md
+README.md
+Dockerfile
+compose.yaml
+docker-compose*.yml
+
+# Phụ thuộc và rác
+**/node_modules
+**/npm-debug.log*
+**/.env
+**/.env.*
+**/.DS_Store
+**/Thumbs.db
+**/Desktop.ini
