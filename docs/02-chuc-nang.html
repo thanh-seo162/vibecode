@@ -34,6 +34,7 @@
       <li><a href="#luong">Luồng một lượt</a></li>
       <li><a href="#nhap">Xử lý bấm/chạm</a></li>
       <li><a href="#bien">Trường hợp biên</a></li>
+      <li><a href="#dang-ky">Đăng ký người chơi &amp; quản trị</a></li>
     </ul>
 
     <h2 id="danh-sach">Danh sách chức năng</h2>
@@ -141,6 +142,136 @@
           <tr><td>Rời tab tới quá 30 giây</td><td>Quay lại thấy màn hình kết thúc. Kỷ lục được cập nhật nếu cần.</td></tr>
           <tr><td>Trình duyệt chặn <code>localStorage</code> (chế độ riêng tư…)</td><td>Game vẫn chơi được, kỷ lục chỉ giữ trong phiên. Không hiện lỗi.</td></tr>
           <tr><td>Giá trị kỷ lục đã lưu bị hỏng (chữ, số âm…)</td><td>Coi như 0, sẽ được ghi đè ở lần phá kỷ lục kế tiếp.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================= Bổ sung: Đăng ký người chơi & trang quản trị ================= -->
+    <h2 id="dang-ky">Đăng ký người chơi &amp; trang quản trị</h2>
+    <p>Phần bổ sung. Người chơi nhập họ tên, email, số điện thoại trước khi chơi. Dữ liệu lưu vào database trên server. Người quản trị đăng nhập vào trang <code>/admin</code> để xem, tìm kiếm, xoá và xuất danh sách ra file CSV. Luật chơi ở các mục trên <strong>không đổi</strong>.</p>
+
+    <h3 id="dk-quyet-dinh">Quyết định đã chốt</h3>
+    <div class="note decision">
+      <strong>Quyết định Q5: đăng ký một lần trên mỗi máy, email là duy nhất</strong>
+      Đăng ký xong, máy nhớ người chơi; lần sau mở game là chơi luôn. Nếu nhập một email đã có trong database thì coi là người chơi cũ: cập nhật họ tên và số điện thoại, không tạo bản ghi mới.
+    </div>
+    <div class="note decision">
+      <strong>Quyết định Q6: lưu điểm cao nhất và số lượt chơi</strong>
+      Mỗi lượt kết thúc, điểm được gửi lên server. Database giữ <em>điểm cao nhất</em> và <em>số lượt chơi</em> của từng người. Kỷ lục trên máy (<code>localStorage</code>, F-11) vẫn giữ nguyên như cũ.
+    </div>
+    <div class="note decision">
+      <strong>Quyết định Q7: một tài khoản quản trị, database SQLite</strong>
+      Tên đăng nhập và mật khẩu quản trị đặt qua biến môi trường của Docker Compose. Database là một file SQLite nằm trong Docker volume, không thêm container nào.
+    </div>
+    <div class="note warn">
+      <strong>Game cần chạy qua server</strong>
+      Đăng ký và gửi điểm cần server. Từ khi có tính năng này, game được mở qua <code>http://localhost:3000</code> (Docker Compose) thay vì bấm đúp file <code>index.html</code>.
+    </div>
+
+    <h3 id="dk-danh-sach">Danh sách chức năng bổ sung</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Chức năng</th><th>Mô tả</th><th>Mức</th></tr></thead>
+        <tbody>
+          <tr><td colspan="4"><strong>Phía người chơi</strong></td></tr>
+          <tr><td>F-16</td><td>Màn hình đăng ký</td><td>Khi máy chưa có người chơi, mở game thấy màn hình đăng ký (S0) thay cho màn hình bắt đầu. Có ô Họ tên, Email, Số điện thoại, ô đồng ý và nút "Đăng ký và chơi".</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-17</td><td>Kiểm tra dữ liệu nhập</td><td>Kiểm tra ngay trên trình duyệt (báo lỗi dưới từng ô) và kiểm tra lại trên server. Quy tắc chi tiết ở <a href="04-quy-tac-du-lieu.html#dk-kiem-tra">04 › Kiểm tra dữ liệu</a>.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-18</td><td>Đồng ý xử lý dữ liệu cá nhân</td><td>Ô đánh dấu "Tôi đồng ý cho lưu họ tên, email, số điện thoại để quản lý người chơi". Chưa đánh dấu thì không gửi được. Thời điểm đồng ý được lưu lại.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-19</td><td>Lưu người chơi</td><td>Server lưu vào database. Email chưa có → tạo mới. Email đã có → cập nhật họ tên, số điện thoại (Q5).</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-20</td><td>Nhớ người chơi trên máy</td><td>Đăng ký thành công, máy lưu mã người chơi và tên vào <code>localStorage</code>. Tải lại trang vẫn vào thẳng màn hình bắt đầu.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-21</td><td>Chào và đổi người chơi</td><td>Màn hình bắt đầu hiện "Xin chào, {Tên}" và liên kết "Không phải bạn?". Bấm liên kết thì máy quên người chơi hiện tại và hiện lại màn hình đăng ký.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-22</td><td>Gửi điểm sau mỗi lượt</td><td>Khi lượt kết thúc, gửi điểm lên server. Server tăng số lượt chơi, cập nhật điểm cao nhất nếu điểm mới cao hơn. Gửi lỗi không làm gián đoạn game.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td colspan="4"><strong>Phía quản trị</strong></td></tr>
+          <tr><td>F-23</td><td>Đăng nhập quản trị</td><td>Trang <code>/admin</code> yêu cầu đăng nhập bằng tên và mật khẩu đặt trong biến môi trường. Chưa đăng nhập thì không xem được dữ liệu, kể cả gọi thẳng API.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-24</td><td>Đăng xuất và hết phiên</td><td>Có nút "Đăng xuất". Phiên tự hết sau 8 giờ hoặc khi server khởi động lại, khi đó phải đăng nhập lại.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-25</td><td>Chống dò mật khẩu</td><td>Sai 5 lần liên tiếp từ cùng một địa chỉ IP thì tạm khoá đăng nhập từ IP đó 15 phút.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-26</td><td>Danh sách người chơi</td><td>Bảng: Họ tên, Email, Số điện thoại, Điểm cao nhất, Số lượt, Ngày đăng ký, Lần chơi cuối. 20 dòng mỗi trang. Mặc định người đăng ký mới nhất ở trên. Sắp xếp được theo điểm cao nhất và theo tên.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-27</td><td>Tìm kiếm</td><td>Một ô tìm kiếm theo họ tên, email hoặc số điện thoại. Không phân biệt hoa thường, không phân biệt dấu ("nguyen" tìm được "Nguyễn").</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-28</td><td>Xoá người chơi</td><td>Nút "Xoá" trên từng dòng, có hộp xác nhận ghi rõ tên và email. Xoá hẳn khỏi database, không khôi phục được.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-29</td><td>Xuất CSV</td><td>Nút "Xuất CSV" tải về file chứa <em>toàn bộ</em> kết quả của bộ lọc tìm kiếm hiện tại (mọi trang, cùng thứ tự sắp xếp). Mở bằng Excel hiển thị đúng tiếng Việt.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-30</td><td>Dữ liệu bền</td><td>Dữ liệu còn nguyên sau khi dừng, khởi động lại hoặc build lại container.</td><td><span class="tag must">Bắt buộc</span></td></tr>
+          <tr><td>F-31</td><td>Xoá nhiều người cùng lúc</td><td>Ô chọn ở mỗi dòng và nút "Xoá các mục đã chọn", dùng chung hộp xác nhận (ghi số lượng).</td><td><span class="tag should">Nên có</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="dk-luong">Luồng người chơi</h3>
+    <figure class="diagram-box">
+      <svg viewBox="0 0 860 260" role="img" aria-label="Mở game: nếu máy chưa có người chơi thì vào màn hình đăng ký, đăng ký thành công thì vào màn hình bắt đầu; nếu đã có thì vào thẳng màn hình bắt đầu. Hết lượt thì gửi điểm lên server.">
+        <defs>
+          <marker id="ar-dk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" class="d-arrow"/>
+          </marker>
+        </defs>
+        <rect class="d-node" x="20" y="96" width="130" height="64" rx="14"/>
+        <text class="d-text" x="85" y="124" text-anchor="middle">Mở game</text>
+        <text class="d-sub" x="85" y="144" text-anchor="middle">đọc localStorage</text>
+
+        <rect class="d-node accent" x="230" y="20" width="170" height="64" rx="14"/>
+        <text class="d-text" x="315" y="48" text-anchor="middle">S0 · Đăng ký</text>
+        <text class="d-sub" x="315" y="68" text-anchor="middle">họ tên, email, SĐT</text>
+
+        <rect class="d-node" x="480" y="96" width="160" height="64" rx="14"/>
+        <text class="d-text" x="560" y="124" text-anchor="middle">S1 · Bắt đầu</text>
+        <text class="d-sub" x="560" y="144" text-anchor="middle">"Xin chào, Tên"</text>
+
+        <rect class="d-node" x="700" y="96" width="140" height="64" rx="14"/>
+        <text class="d-text" x="770" y="124" text-anchor="middle">Chơi → S3</text>
+        <text class="d-sub" x="770" y="144" text-anchor="middle">gửi điểm lên server</text>
+
+        <path class="d-line" d="M150 116L226 62" marker-end="url(#ar-dk)"/>
+        <text class="d-sub" x="150" y="76" text-anchor="middle">chưa có</text>
+        <path class="d-line" d="M150 140H200V200H560V164" marker-end="url(#ar-dk)"/>
+        <text class="d-sub" x="380" y="194" text-anchor="middle">đã có người chơi trên máy</text>
+        <path class="d-line" d="M400 52H560V92" marker-end="url(#ar-dk)"/>
+        <text class="d-sub" x="480" y="44" text-anchor="middle">đăng ký thành công</text>
+        <path class="d-line" d="M640 128H696" marker-end="url(#ar-dk)"/>
+        <path class="d-line" d="M500 96V84H400" marker-end="url(#ar-dk)" stroke-dasharray="4 4"/>
+        <text class="d-sub" x="455" y="104" text-anchor="middle">Không phải bạn?</text>
+        <path class="d-line" d="M770 160V240H340V88" marker-end="url(#ar-dk)" stroke-dasharray="4 4"/>
+        <text class="d-sub" x="560" y="234" text-anchor="middle">server báo người chơi không còn tồn tại (đã bị xoá)</text>
+      </svg>
+      <figcaption>Màn hình đăng ký là màn hình giao diện, nằm ngoài vòng trạng thái game <code>start → playing → ended</code>. Vòng trạng thái đó không đổi.</figcaption>
+    </figure>
+    <ol>
+      <li>Mở game. Nếu <code>localStorage</code> chưa có người chơi (hoặc dữ liệu hỏng) → hiện S0.</li>
+      <li>Người chơi điền form, bấm "Đăng ký và chơi". Trình duyệt kiểm tra; có lỗi thì báo dưới ô lỗi và đặt focus vào ô lỗi đầu tiên, không gửi.</li>
+      <li>Hợp lệ → gửi lên server. Nút chuyển sang "Đang gửi…" và bị khoá để không gửi hai lần.</li>
+      <li>Server kiểm tra lại, lưu hoặc cập nhật, trả về mã người chơi và mã bí mật (token). Máy lưu lại và chuyển sang S1.</li>
+      <li>Server báo lỗi dữ liệu → hiện lỗi dưới ô tương ứng. Mất kết nối hoặc lỗi server → hiện thông báo chung ở đầu form, giữ nguyên dữ liệu đã nhập để bấm lại.</li>
+      <li>Chơi như cũ. Khi lượt kết thúc, gửi điểm lên server ngầm; màn hình S3 hiện ngay, không chờ kết quả.</li>
+    </ol>
+
+    <h3 id="dk-admin-luong">Luồng quản trị</h3>
+    <ol>
+      <li>Vào <code>/admin</code>. Chưa đăng nhập → thấy form đăng nhập (A1).</li>
+      <li>Đăng nhập đúng → vào trang danh sách (A2). Sai → báo "Sai tên đăng nhập hoặc mật khẩu" (không nói rõ sai cái nào).</li>
+      <li>Ở A2: gõ từ khoá vào ô tìm kiếm (tự lọc sau khi ngừng gõ 300ms, hoặc bấm Enter), đổi trang, đổi cách sắp xếp.</li>
+      <li>Bấm "Xoá" trên một dòng → hộp xác nhận (A3) → bấm "Xoá" lần nữa → dòng biến mất, hiện thông báo "Đã xoá {Tên}".</li>
+      <li>Bấm "Xuất CSV" → trình duyệt tải về file CSV theo bộ lọc hiện tại.</li>
+      <li>Bấm "Đăng xuất" hoặc hết phiên → quay về A1. Mọi thao tác khi đã hết phiên đều đưa về A1 kèm thông báo "Phiên đăng nhập đã hết".</li>
+    </ol>
+
+    <h3 id="dk-bien">Trường hợp biên</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tình huống</th><th>Hành vi đúng</th></tr></thead>
+        <tbody>
+          <tr><td>Đăng ký bằng email đã có, viết hoa khác (<code>An@Gmail.com</code> và <code>an@gmail.com</code>)</td><td>Coi là cùng một email. Cập nhật bản ghi cũ, không tạo bản ghi mới. Điểm cao nhất và số lượt giữ nguyên.</td></tr>
+          <tr><td>Hai máy đăng ký cùng một email</td><td>Một bản ghi duy nhất. Máy đăng ký sau nhận token mới, token của máy trước hết hiệu lực; máy trước sẽ được yêu cầu đăng ký lại ở lần gửi điểm kế tiếp.</td></tr>
+          <tr><td>Bấm "Đăng ký và chơi" hai lần rất nhanh</td><td>Chỉ gửi một yêu cầu (nút bị khoá khi đang gửi). Nếu server vẫn nhận hai yêu cầu, email duy nhất đảm bảo chỉ có một bản ghi.</td></tr>
+          <tr><td>Server không chạy hoặc mất mạng lúc đăng ký</td><td>Báo "Không kết nối được máy chủ. Vui lòng thử lại." Không vào chơi được (đăng ký là bắt buộc). Dữ liệu đã nhập được giữ nguyên.</td></tr>
+          <tr><td>Mất mạng lúc gửi điểm</td><td>Game không báo lỗi, vẫn hiện S3 bình thường. Điểm lượt đó không được ghi lên server (chấp nhận được, không gửi lại).</td></tr>
+          <tr><td>Admin xoá một người chơi trong khi máy họ vẫn nhớ</td><td>Lần gửi điểm kế tiếp server trả lỗi "không có quyền". Máy quên người chơi; lần tới bấm "Chơi lại" hoặc tải lại trang sẽ hiện S0.</td></tr>
+          <tr><td>Ai đó gửi thẳng điểm giả (ví dụ 9999) lên API</td><td>Server từ chối điểm ngoài khoảng 0–<code>MAX_SCORE</code> (100). Không có token hợp lệ thì không gửi được điểm.</td></tr>
+          <tr><td>Họ tên có ký tự HTML như <code>&lt;script&gt;</code></td><td>Bị từ chối ở bước kiểm tra (họ tên chỉ chứa chữ, khoảng trắng và <code>' . -</code>). Trang admin luôn hiển thị dữ liệu dạng chữ thuần, không dựng HTML từ dữ liệu.</td></tr>
+          <tr><td>Họ tên bắt đầu bằng <code>=</code>, <code>+</code>, <code>-</code>, <code>@</code></td><td>Họ tên không được bắt đầu bằng các ký tự này theo quy tắc kiểm tra. Dù vậy, khi xuất CSV mọi ô vẫn được bảo vệ chống chèn công thức Excel.</td></tr>
+          <tr><td>Tìm kiếm với ký tự <code>%</code> hoặc <code>_</code></td><td>Tìm đúng ký tự đó, không bị hiểu là ký tự đại diện.</td></tr>
+          <tr><td>Xuất CSV khi không có kết quả nào</td><td>Vẫn tải về file chỉ có dòng tiêu đề.</td></tr>
+          <tr><td>Xoá một người đã bị xoá ở tab khác</td><td>Báo "Người chơi không còn tồn tại", tải lại danh sách.</td></tr>
+          <tr><td>Xoá dòng cuối cùng của trang cuối</td><td>Tự lùi về trang trước (nếu có).</td></tr>
+          <tr><td>Chưa đặt <code>ADMIN_PASSWORD</code> khi chạy container</td><td>Game vẫn chạy. Trang <code>/admin</code> báo "Trang quản trị chưa được cấu hình" và không cho đăng nhập. Không có mật khẩu mặc định.</td></tr>
+          <tr><td>Đổi người chơi ("Không phải bạn?") trên máy đã có kỷ lục</td><td>Kỷ lục trên máy (F-11) không đổi vì là kỷ lục của máy. Điểm cao nhất của từng người nằm trên server.</td></tr>
         </tbody>
       </table>
     </div>

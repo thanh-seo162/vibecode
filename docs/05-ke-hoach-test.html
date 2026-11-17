@@ -35,6 +35,7 @@
       <li><a href="#thiet-bi">Thiết bị</a></li>
       <li><a href="#truy-vet">Bảng truy vết</a></li>
       <li><a href="#quy-trinh">Quy trình</a></li>
+      <li><a href="#dang-ky">Test đăng ký &amp; quản trị</a></li>
     </ul>
 
     <h2 id="chien-luoc">Chiến lược</h2>
@@ -187,6 +188,172 @@
         </tbody>
       </table>
     </div>
+
+    <!-- ================= Bổ sung: Test đăng ký người chơi & quản trị ================= -->
+    <h2 id="dang-ky">Test đăng ký người chơi &amp; quản trị <span class="muted" style="font-size:var(--text-body);font-weight:400">(bổ sung · F-16 → F-31)</span></h2>
+
+    <h3 id="dk-chien-luoc">Chiến lược bổ sung</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Lớp</th><th>Kiểm tra cái gì</th><th>Công cụ</th><th>Khi nào chạy</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag auto">Tự động</span> trình duyệt</td><td>Hàm thuần trong <code>app/validate.js</code> và hàm người chơi trong <code>app/logic.js</code></td><td>Thêm vào <code>tests.html</code> như các ca AT cũ</td><td>Sau mỗi lần sửa quy tắc kiểm tra</td></tr>
+          <tr><td><span class="tag auto">Tự động</span> server</td><td>API, database, đăng nhập, phân quyền, CSV</td><td><code>node --test</code> có sẵn trong Node 22 (không thêm thư viện). File trong <code>server/test/</code>. Mỗi lần chạy dùng database tạm riêng (file trong thư mục tạm, xoá khi xong), server chạy ở cổng ngẫu nhiên. Lệnh: <code>npm test</code> trong <code>server/</code>.</td><td>Sau mỗi lần sửa server; trước khi build Docker</td></tr>
+          <tr><td><span class="tag">Thủ công</span></td><td>Giao diện form, trang quản trị, file CSV trong Excel, dữ liệu còn sau khi khởi động lại container</td><td>Trình duyệt, điện thoại, Excel, Docker Compose</td><td>Trước khi coi là hoàn thành</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note warn">
+      <strong>Ca MT-01 cũ (mở bằng <code>file://</code>)</strong>
+      Từ khi có đăng ký, game cần server. MT-01 vẫn giữ để kiểm tra phần giao diện tĩnh, nhưng ở <code>file://</code> sẽ thấy lỗi kết nối khi đăng ký — đó là hành vi đúng. Các ca dưới đây chạy qua <code>http://localhost:3000</code> bằng <code>docker compose up --build</code>.
+    </div>
+
+    <h3 id="dk-tu-dong">Ca test tự động: tests.html (bổ sung)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Nhóm</th><th>Ca test</th><th>Kết quả mong đợi</th></tr></thead>
+        <tbody>
+          <tr><td>AT-27</td><td>Họ tên</td><td><code>normalizeName("  nguyễn   Văn An ")</code></td><td><code>"nguyễn Văn An"</code></td></tr>
+          <tr><td>AT-28</td><td>Họ tên</td><td><code>validateName</code> với <code>""</code>, <code>"   "</code>, <code>"A"</code>, <code>"An"</code>, chuỗi 50 chữ, chuỗi 51 chữ</td><td><code>name_required</code>, <code>name_required</code>, <code>name_length</code>, <code>null</code>, <code>null</code>, <code>name_length</code></td></tr>
+          <tr><td>AT-29</td><td>Họ tên</td><td><code>validateName</code> với <code>"An123"</code>, <code>"&lt;script&gt;"</code>, <code>"=SUM(1)"</code>, <code>"-An"</code>, <code>"O'Neil"</code>, <code>"Trần Thị-Bình"</code>, <code>"Đặng Ngọc Ánh"</code></td><td>4 ca đầu <code>name_chars</code>; 3 ca sau <code>null</code></td></tr>
+          <tr><td>AT-30</td><td>Họ tên</td><td>Cùng chữ "Ánh" viết dạng NFD (chữ + dấu tách rời) và NFC</td><td>Sau chuẩn hoá hai chuỗi bằng nhau, dài như nhau</td></tr>
+          <tr><td>AT-31</td><td>Email</td><td><code>normalizeEmail(" An@Gmail.COM ")</code></td><td><code>"an@gmail.com"</code></td></tr>
+          <tr><td>AT-32</td><td>Email</td><td><code>validateEmail</code> với <code>""</code>, <code>"an@gmail"</code>, <code>"an gmail.com"</code>, <code>"a@@b.vn"</code>, <code>"a@b.c"</code>, <code>"an.nguyen+game@vidu.com.vn"</code>, chuỗi 255 ký tự</td><td><code>email_required</code>, <code>email_format</code> × 4, <code>null</code>, <code>email_format</code></td></tr>
+          <tr><td>AT-33</td><td>SĐT</td><td><code>normalizePhone</code> với <code>"0912.345.678"</code>, <code>"0912-345-678"</code>, <code>"(091) 234 5678"</code>, <code>"+84 912 345 678"</code>, <code>"84912345678"</code></td><td>Đều là <code>"0912345678"</code></td></tr>
+          <tr><td>AT-34</td><td>SĐT</td><td><code>validatePhone</code> với <code>""</code>, <code>"091234"</code>, <code>"09123456789"</code>, <code>"0212345678"</code>, <code>"0912abc678"</code>, <code>"0312345678"</code>, <code>"0512345678"</code>, <code>"0712345678"</code>, <code>"0812345678"</code></td><td><code>phone_required</code>, <code>phone_format</code> × 4, <code>null</code> × 4</td></tr>
+          <tr><td>AT-35</td><td>Đăng ký</td><td><code>validateRegistration</code> với đủ 4 trường hợp lệ, <code>consent: true</code></td><td><code>ok: true</code>, <code>value</code> đã chuẩn hoá, <code>errors</code> rỗng</td></tr>
+          <tr><td>AT-36</td><td>Đăng ký</td><td><code>validateRegistration</code> với <code>consent</code> là <code>false</code>, thiếu, <code>"true"</code></td><td>Cả ba: <code>ok: false</code>, <code>errors.consent = "consent_required"</code></td></tr>
+          <tr><td>AT-37</td><td>Đăng ký</td><td>Email và SĐT cùng sai</td><td><code>errors</code> có đúng 2 khoá <code>email</code>, <code>phone</code></td></tr>
+          <tr><td>AT-38</td><td>Hiển thị</td><td><code>formatPhone("0912345678")</code></td><td><code>"0912 345 678"</code></td></tr>
+          <tr><td>AT-39</td><td>Tìm kiếm</td><td><code>foldText</code> với <code>"Nguyễn Văn Đức"</code>, <code>"  ĐẶNG   thị  "</code></td><td><code>"nguyen van duc"</code>, <code>"dang thi"</code></td></tr>
+          <tr><td>AT-40</td><td>Điểm</td><td><code>isValidScore</code> với 0, 28, 100, 101, -1, 2.5, <code>"10"</code>, <code>NaN</code></td><td>true, true, true, false, false, false, false, false</td></tr>
+          <tr><td>AT-41</td><td>Người chơi</td><td><code>parsePlayer</code> với JSON đúng; <code>null</code>; <code>"abc"</code>; thiếu <code>token</code>; <code>id: 0</code>; token 63 ký tự</td><td>Ca đầu trả đối tượng; các ca còn lại <code>null</code></td></tr>
+          <tr><td>AT-42</td><td>Người chơi</td><td><code>savePlayer</code> rồi <code>loadPlayer</code> trên bộ nhớ giả; sau đó <code>clearPlayer</code></td><td>Đọc lại đúng đối tượng; sau khi xoá đọc ra <code>null</code></td></tr>
+          <tr><td>AT-43</td><td>Người chơi</td><td>Bộ nhớ giả ném lỗi khi đọc/ghi</td><td><code>loadPlayer</code> trả <code>null</code>, <code>savePlayer</code>/<code>clearPlayer</code> không ném lỗi ra ngoài</td></tr>
+          <tr><td>AT-44</td><td>Cấu hình</td><td>Đọc hằng số mới</td><td>Đúng các giá trị trong <a href="04-quy-tac-du-lieu.html#dk-hang-so">04 › Hằng số mới</a>; <code>MAX_SCORE === ROUND_MS / GAP_MIN_MS</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="dk-server">Ca test tự động: server (node --test)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Nhóm</th><th>Ca test</th><th>Kết quả mong đợi</th></tr></thead>
+        <tbody>
+          <tr><td>ST-01</td><td>Đăng ký</td><td><code>POST /api/players</code> dữ liệu hợp lệ, email mới</td><td><code>201</code>, có <code>id</code>, <code>name</code>, <code>token</code> 64 ký tự hex. Database có 1 dòng, <code>token_hash</code> ≠ token, <code>best_score 0</code>, <code>plays_count 0</code>, <code>consent_at</code> có giá trị.</td></tr>
+          <tr><td>ST-02</td><td>Đăng ký</td><td>Gửi dữ liệu chưa chuẩn hoá (<code>" An@Gmail.COM "</code>, <code>"+84 912 345 678"</code>)</td><td>Database lưu <code>an@gmail.com</code>, <code>0912345678</code></td></tr>
+          <tr><td>ST-03</td><td>Đăng ký</td><td>Từng trường sai, thiếu <code>consent</code></td><td><code>400</code>, <code>error: "validation"</code>, <code>fields</code> đúng mã lỗi; database không đổi</td></tr>
+          <tr><td>ST-04</td><td>Email trùng</td><td>Đăng ký A (<code>an@gmail.com</code>), gửi điểm 15; đăng ký lại với <code>AN@gmail.com</code>, tên và SĐT khác</td><td><code>200</code>, cùng <code>id</code>. Vẫn 1 dòng. Tên, SĐT mới; <code>best_score 15</code>, <code>plays_count 1</code>, <code>created_at</code> giữ nguyên.</td></tr>
+          <tr><td>ST-05</td><td>Email trùng</td><td>Sau ST-04, gửi điểm bằng token <em>cũ</em></td><td><code>401</code>. Token mới thì <code>200</code>.</td></tr>
+          <tr><td>ST-06</td><td>Email trùng</td><td>Gửi 2 yêu cầu đăng ký cùng email đồng thời</td><td>Cả hai thành công (<code>201</code>/<code>200</code>), database chỉ có 1 dòng</td></tr>
+          <tr><td>ST-07</td><td>Đăng ký</td><td>Thân không phải JSON; thân 20 KB; phương thức <code>GET</code></td><td><code>400 bad_json</code>; <code>413</code>; <code>405</code></td></tr>
+          <tr><td>ST-08</td><td>Đăng ký</td><td>Gửi thêm trường lạ <code>best_score: 99</code>, <code>id: 1</code></td><td>Bị bỏ qua, <code>best_score</code> vẫn 0</td></tr>
+          <tr><td>ST-09</td><td>Giới hạn</td><td>Gọi đăng ký 11 lần trong 1 phút từ cùng IP</td><td>10 lần đầu được xử lý, lần 11 <code>429</code></td></tr>
+          <tr><td>ST-10</td><td>Ghi điểm</td><td>Gửi lần lượt 12, 7, 20</td><td><code>best_score</code> 12 → 12 → 20; <code>plays_count</code> 1 → 2 → 3; <code>last_played_at</code> cập nhật mỗi lần</td></tr>
+          <tr><td>ST-11</td><td>Ghi điểm</td><td>Gửi điểm 0; điểm 100</td><td>Cả hai <code>200</code>; điểm 0 vẫn tăng <code>plays_count</code></td></tr>
+          <tr><td>ST-12</td><td>Ghi điểm</td><td>Gửi điểm 101, -1, 2.5, <code>"10"</code>, thiếu <code>score</code></td><td>Đều <code>400 invalid_score</code>, database không đổi</td></tr>
+          <tr><td>ST-13</td><td>Ghi điểm</td><td>Không có header <code>Authorization</code>; token sai; token của người đã bị xoá</td><td>Đều <code>401</code></td></tr>
+          <tr><td>ST-14</td><td>Quản trị · cấu hình</td><td>Khởi động server không có <code>ADMIN_PASSWORD</code>; rồi với mật khẩu 11 ký tự</td><td>Mọi API quản trị trả <code>503 admin_disabled</code>; <code>POST /api/players</code> vẫn chạy</td></tr>
+          <tr><td>ST-15</td><td>Đăng nhập</td><td>Đúng tên và mật khẩu</td><td><code>204</code>, cookie <code>dc_admin</code> có <code>HttpOnly</code>, <code>SameSite=Strict</code>, <code>Max-Age=28800</code></td></tr>
+          <tr><td>ST-16</td><td>Đăng nhập</td><td>Sai mật khẩu; sai tên; cả hai trống</td><td>Đều <code>401 bad_credentials</code>, nội dung phản hồi giống hệt nhau</td></tr>
+          <tr><td>ST-17</td><td>Chống dò</td><td>Sai 5 lần liên tiếp, rồi thử đúng mật khẩu</td><td>Lần thứ 5 trở đi và cả lần đúng mật khẩu đều <code>429 locked</code>. Giả lập đồng hồ tới sau 15 phút thì đăng nhập đúng được.</td></tr>
+          <tr><td>ST-18</td><td>Chống dò</td><td>Sai 4 lần, đúng 1 lần, sai 4 lần nữa</td><td>Không bị khoá (bộ đếm đã đặt lại)</td></tr>
+          <tr><td>ST-19</td><td>Phân quyền</td><td>Gọi từng API quản trị (<code>me</code>, danh sách, xoá, xoá nhiều, CSV, đăng xuất) khi không có cookie và khi cookie sai</td><td>Đều <code>401</code>, không lộ dữ liệu; không có dòng nào bị xoá</td></tr>
+          <tr><td>ST-20</td><td>Phiên</td><td>Giả lập đồng hồ tới 8 giờ + 1 giây sau khi đăng nhập</td><td><code>401</code></td></tr>
+          <tr><td>ST-21</td><td>Phiên</td><td>Đăng xuất rồi dùng lại cookie cũ</td><td><code>401</code></td></tr>
+          <tr><td>ST-22</td><td>CSRF</td><td><code>DELETE</code> có cookie hợp lệ nhưng header <code>Origin: http://evil.example</code>; không có <code>Origin</code></td><td>Đều <code>403</code>, không xoá</td></tr>
+          <tr><td>ST-23</td><td>Danh sách</td><td>Tạo 45 người chơi, lấy trang 1, 2, 3, 4</td><td>20, 20, 5, 0 dòng; <code>total = totalAll = 45</code>; mặc định mới nhất trước; không có trường <code>token_hash</code></td></tr>
+          <tr><td>ST-24</td><td>Danh sách</td><td><code>sort=score</code>; <code>sort=name</code>; <code>sort=abc</code>; <code>page=-1</code>; <code>page=abc</code></td><td>Đúng thứ tự trong 04; hai ca <code>sort</code>/<code>page</code> lạ dùng mặc định, không lỗi</td></tr>
+          <tr><td>ST-25</td><td>Tìm kiếm</td><td>Có "Nguyễn Văn Đức", "Trần Thị Bình"; tìm <code>nguyen</code>, <code>NGUYỄN</code>, <code>duc</code>, <code>Đức</code></td><td>Đều chỉ ra "Nguyễn Văn Đức"</td></tr>
+          <tr><td>ST-26</td><td>Tìm kiếm</td><td>Tìm theo phần email (<code>vidu.com</code>); theo SĐT <code>345678</code>, <code>0912 345</code>, <code>+84912</code></td><td>Ra đúng người có email/SĐT tương ứng</td></tr>
+          <tr><td>ST-27</td><td>Tìm kiếm</td><td>Tìm <code>%</code>, <code>_</code>, <code>'</code>, <code>' OR 1=1 --</code></td><td>Không lỗi, không trả về toàn bộ danh sách (0 kết quả nếu không ai chứa ký tự đó)</td></tr>
+          <tr><td>ST-28</td><td>Tìm kiếm</td><td>Từ khoá 500 ký tự; từ khoá chỉ có khoảng trắng</td><td>Không lỗi; khoảng trắng = không lọc</td></tr>
+          <tr><td>ST-29</td><td>Xoá</td><td><code>DELETE /api/admin/players/:id</code> đúng mã; gọi lại lần hai; mã <code>abc</code></td><td><code>204</code>; <code>404</code>; <code>404</code>. Dòng đã mất khỏi database.</td></tr>
+          <tr><td>ST-30</td><td>Xoá</td><td>Xoá người chơi rồi đăng ký lại cùng email</td><td><code>201</code>, <code>id</code> mới (lớn hơn), điểm 0</td></tr>
+          <tr><td>ST-31</td><td>Xoá nhiều <span class="tag should">Nên có</span></td><td><code>{ ids: [a, b, 99999] }</code>; 101 mã</td><td><code>{ deleted: 2 }</code>; <code>400</code></td></tr>
+          <tr><td>ST-32</td><td>CSV</td><td>Tải CSV với 3 người chơi</td><td><code>Content-Type: text/csv; charset=utf-8</code>, <code>Content-Disposition</code> đúng mẫu tên file; 3 byte đầu <code>EF BB BF</code>; dòng tiêu đề đúng 8 cột; xuống dòng CRLF; 4 dòng</td></tr>
+          <tr><td>ST-33</td><td>CSV</td><td>Tạo 45 người, tải CSV có <code>q</code> khớp 30 người, <code>sort=score</code></td><td>Đủ 30 dòng dữ liệu (không bị giới hạn 20), đúng thứ tự điểm</td></tr>
+          <tr><td>ST-34</td><td>CSV</td><td>Hàm <code>csvCell</code> với <code>Nguyễn "An"</code>, <code>=1+1</code>, <code>+84</code>, <code>-5</code>, <code>@abc</code>, chuỗi có dấu phẩy, chuỗi có xuống dòng</td><td><code>"Nguyễn ""An"""</code>, <code>"'=1+1"</code>, <code>"'+84"</code>, <code>"'-5"</code>, <code>"'@abc"</code>, giữ nguyên dấu phẩy và xuống dòng trong ngoặc kép</td></tr>
+          <tr><td>ST-35</td><td>CSV</td><td>Người chưa chơi; người chơi lúc <code>2026-11-17T07:05:00Z</code></td><td>"Lần chơi cuối" trống; ngày hiện <code>17/11/2026 14:05</code></td></tr>
+          <tr><td>ST-36</td><td>CSV</td><td>Tìm kiếm không ra ai rồi tải CSV</td><td>File chỉ có BOM + dòng tiêu đề</td></tr>
+          <tr><td>ST-37</td><td>Bền dữ liệu</td><td>Đăng ký, dừng server, khởi động lại với cùng <code>DB_PATH</code></td><td>Dữ liệu còn; token cũ vẫn gửi điểm được; phiên quản trị cũ thì <code>401</code></td></tr>
+          <tr><td>ST-38</td><td>Log</td><td>Bắt log khi đăng ký, đăng nhập sai, tìm kiếm, xoá</td><td>Log không chứa email, SĐT, mật khẩu, token, từ khoá tìm kiếm</td></tr>
+          <tr><td>ST-39</td><td>Tĩnh</td><td><code>GET /</code>, <code>/admin/</code>, <code>/healthz</code>; <code>GET /data/dap-chuot.db</code>, <code>/../.env</code></td><td>3 ca đầu <code>200</code>; 2 ca sau <code>403</code>/<code>404</code>, không bao giờ trả về nội dung file</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="dk-thu-cong">Ca test thủ công (bổ sung)</h3>
+    <p>Chạy <code>docker compose up --build</code> với file <code>.env</code> có <code>ADMIN_PASSWORD</code>. Mở <code>http://localhost:3000</code>. Mỗi ca ghi lại như mẫu ở trên.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Các bước</th><th>Kết quả mong đợi</th></tr></thead>
+        <tbody>
+          <tr><td>MT-26</td><td>Mở game lần đầu trên trình duyệt sạch (hoặc xoá <code>dapChuot.player</code>)</td><td>Thấy S0: tên game, 3 ô có nhãn, ô đồng ý, nút "Đăng ký và chơi". Console không lỗi.</td></tr>
+          <tr><td>MT-27</td><td>Bấm "Đăng ký và chơi" khi form trống</td><td>Hiện lỗi tiếng Việt dưới cả 3 ô và ô đồng ý, focus nhảy vào ô Họ tên. Không gửi yêu cầu nào (tab Network trống).</td></tr>
+          <tr><td>MT-28</td><td>Nhập lần lượt từng giá trị sai trong AT-28 → AT-34, rời ô</td><td>Lỗi hiện khi rời ô, không hiện khi đang gõ dở. Sửa đúng thì lỗi biến mất ngay. Câu chữ khớp bảng ở 03.</td></tr>
+          <tr><td>MT-29</td><td>Điền đúng, đánh dấu đồng ý, bấm gửi</td><td>Nút chuyển "Đang gửi…" và bị khoá; sau đó vào S1 với "Xin chào, {Tên}".</td></tr>
+          <tr><td>MT-30</td><td>Tải lại trang (F5); đóng và mở lại trình duyệt</td><td>Vào thẳng S1 có lời chào, không phải đăng ký lại.</td></tr>
+          <tr><td>MT-31</td><td>Bấm "Không phải bạn?"</td><td>Về S0 với form trống. Kỷ lục trên máy không đổi.</td></tr>
+          <tr><td>MT-32</td><td>Đăng ký lại bằng email cũ viết hoa khác, tên khác</td><td>Vào được S1 với tên mới. Trang quản trị chỉ có 1 dòng cho email đó, tên đã cập nhật, điểm giữ nguyên.</td></tr>
+          <tr><td>MT-33</td><td>Dừng container (<code>docker compose stop</code>), điền form và gửi</td><td>Hiện "Không kết nối được máy chủ. Vui lòng thử lại.", dữ liệu đã nhập còn nguyên. Bật lại container, bấm gửi thì thành công.</td></tr>
+          <tr><td>MT-34</td><td>Chơi 3 lượt với điểm khác nhau, theo dõi tab Network</td><td>Mỗi lượt có đúng 1 yêu cầu <code>POST /api/scores</code>, gửi lúc hiện "Hết giờ!". S3 hiện ngay, không chờ. Trang quản trị: số lượt 3, điểm cao nhất đúng.</td></tr>
+          <tr><td>MT-35</td><td>Đang chơi, dừng container; hết giờ</td><td>S3 hiện bình thường, không có thông báo lỗi. Bấm "Chơi lại" chơi tiếp được.</td></tr>
+          <tr><td>MT-36</td><td>Admin xoá người chơi đang dùng máy này; trên máy chơi hết một lượt, rồi bấm "Chơi lại"</td><td>Sau lượt đó, máy quên người chơi; bấm "Chơi lại" (hoặc tải lại trang) thì hiện S0.</td></tr>
+          <tr><td>MT-37</td><td>Trên điện thoại (iPhone Safari và Android Chrome): chạm vào từng ô của form</td><td>Trang không tự phóng to. Ô Email mở bàn phím có <code>@</code>, ô SĐT mở bàn phím số. Gợi ý tự điền (tên, email, SĐT) hoạt động. Form vừa màn hình 360px, không cuộn ngang.</td></tr>
+          <tr><td>MT-38</td><td>Chỉ dùng bàn phím: Tab qua form, Space để đánh dấu đồng ý, Enter để gửi</td><td>Thứ tự Tab đúng như 03, thấy rõ viền focus, gửi được.</td></tr>
+          <tr><td>MT-39</td><td>Mở <code>/admin</code> khi chưa đăng nhập; gõ thẳng <code>/api/admin/players</code> vào thanh địa chỉ</td><td>Thấy form đăng nhập A1; địa chỉ API trả <code>401</code>, không có dữ liệu.</td></tr>
+          <tr><td>MT-40</td><td>Đăng nhập sai, rồi đúng</td><td>Sai: thông báo chung, ô mật khẩu bị xoá trắng và có focus. Đúng: vào A2 thấy danh sách.</td></tr>
+          <tr><td>MT-41</td><td>Đăng nhập sai 5 lần liên tiếp</td><td>Thông báo khoá 15 phút; nhập đúng mật khẩu cũng không vào được trong thời gian đó.</td></tr>
+          <tr><td>MT-42</td><td>Ở A2: kiểm tra cột, phân trang (cần ≥ 21 người, dùng dữ liệu mẫu), đổi sắp xếp</td><td>Đủ 7 cột dữ liệu và nút Xoá; 20 dòng/trang; "Trang x / y" đúng; nút Trước/Sau mờ ở đầu/cuối; sắp xếp đúng.</td></tr>
+          <tr><td>MT-43</td><td>Gõ "nguyen" vào ô tìm kiếm; gõ một phần SĐT; gõ một phần email; tải lại trang</td><td>Lọc tự động sau khi ngừng gõ; ra đúng người; dòng "Tìm thấy N kết quả…" đúng. Tải lại trang vẫn giữ từ khoá và kết quả.</td></tr>
+          <tr><td>MT-44</td><td>Bấm "Xoá" một dòng → bấm "Huỷ"; bấm "Xoá" → bấm Esc; bấm "Xoá" → bấm Enter ngay</td><td>Cả ba lần không xoá gì (focus mặc định ở "Huỷ").</td></tr>
+          <tr><td>MT-45</td><td>Bấm "Xoá" một dòng → bấm "Xoá" trong hộp</td><td>Dòng biến mất, toast "Đã xoá {Tên}", tổng số giảm 1. Tải lại trang vẫn không còn.</td></tr>
+          <tr><td>MT-46</td><td>Mở A2 ở hai tab, xoá cùng một người ở cả hai</td><td>Tab thứ hai báo "Người chơi không còn tồn tại" và tải lại danh sách.</td></tr>
+          <tr><td>MT-47</td><td>Xuất CSV không lọc; mở file bằng Excel (Windows) bấm đúp</td><td>Tên file đúng mẫu. Tiếng Việt hiển thị đúng, mỗi trường một cột, SĐT giữ số 0 đầu, ngày giờ Việt Nam. Số dòng = tổng số người chơi.</td></tr>
+          <tr><td>MT-48</td><td>Tìm "nguyen" rồi xuất CSV; mở bằng Google Sheets</td><td>Chỉ có các dòng khớp, đủ mọi trang, đúng thứ tự đang chọn.</td></tr>
+          <tr><td>MT-49</td><td>Đăng xuất, bấm nút Back của trình duyệt</td><td>Không thấy lại dữ liệu; trang đưa về A1.</td></tr>
+          <tr><td>MT-50</td><td>Đăng ký vài người, chạy <code>docker compose down</code> rồi <code>docker compose up --build</code></td><td>Danh sách trong trang quản trị còn nguyên. Máy người chơi vẫn vào thẳng S1 và gửi điểm được.</td></tr>
+          <tr><td>MT-51</td><td>Chạy container không có <code>ADMIN_PASSWORD</code></td><td>Game chơi và đăng ký bình thường. <code>/admin</code> hiện "Trang quản trị chưa được cấu hình." Log có dòng cảnh báo.</td></tr>
+          <tr><td>MT-52</td><td>Xem log container trong suốt các ca trên (<code>docker compose logs</code>)</td><td>Không thấy email, SĐT, mật khẩu, token hay từ khoá tìm kiếm.</td></tr>
+          <tr><td>MT-53</td><td>Trang quản trị ở chế độ tối và ở độ rộng 360px</td><td>Chữ dễ đọc; bảng cuộn ngang trong khung, trang không cuộn ngang; ô tìm kiếm chiếm hết hàng.</td></tr>
+          <tr><td>MT-54</td><td>Chọn 3 dòng, bấm "Xoá 3 mục đã chọn" <span class="tag should">Nên có</span></td><td>Hộp xác nhận ghi "Xoá 3 người chơi?"; xác nhận thì xoá đủ 3, toast "Đã xoá 3 người chơi".</td></tr>
+          <tr><td>MT-55</td><td>Chạy <code>npm test</code> trong <code>server/</code> và mở <code>tests.html</code></td><td>Mọi ca ST và AT đều đạt.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="dk-truy-vet">Bảng truy vết bổ sung</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Yêu cầu</th><th>Chức năng</th><th>Tự động</th><th>Thủ công</th></tr></thead>
+        <tbody>
+          <tr><td>Nhập họ tên, email, SĐT trước khi chơi</td><td>F-16, F-18</td><td>AT-35, AT-36</td><td>MT-26, MT-27, MT-29</td></tr>
+          <tr><td>Dữ liệu nhập được kiểm tra đúng, báo lỗi rõ</td><td>F-17</td><td>AT-27 → AT-37, ST-03, ST-07, ST-08</td><td>MT-27, MT-28, MT-37, MT-38</td></tr>
+          <tr><td>Dữ liệu lưu vào database</td><td>F-19, F-30</td><td>ST-01, ST-02, ST-37</td><td>MT-29, MT-50</td></tr>
+          <tr><td><em>Quyết định Q5:</em> đăng ký 1 lần/máy, email duy nhất</td><td>F-19, F-20, F-21</td><td>AT-41 → AT-43, ST-04 → ST-06</td><td>MT-30 → MT-32</td></tr>
+          <tr><td><em>Quyết định Q6:</em> lưu điểm cao nhất và số lượt</td><td>F-22</td><td>AT-40, ST-10 → ST-13</td><td>MT-34 → MT-36</td></tr>
+          <tr><td>Trang admin phải đăng nhập</td><td>F-23, F-24, F-25</td><td>ST-14 → ST-22</td><td>MT-39 → MT-41, MT-49, MT-51</td></tr>
+          <tr><td>Xem danh sách</td><td>F-26</td><td>ST-23, ST-24</td><td>MT-42, MT-53</td></tr>
+          <tr><td>Tìm kiếm</td><td>F-27</td><td>AT-39, ST-25 → ST-28</td><td>MT-43</td></tr>
+          <tr><td>Xoá</td><td>F-28, F-31</td><td>ST-29 → ST-31</td><td>MT-44 → MT-46, MT-54</td></tr>
+          <tr><td>Xuất CSV</td><td>F-29</td><td>ST-32 → ST-36</td><td>MT-47, MT-48</td></tr>
+          <tr><td>Bảo vệ dữ liệu cá nhân</td><td>F-18, F-25</td><td>ST-19, ST-38, ST-39</td><td>MT-52</td></tr>
+          <tr><td>Luật chơi cũ không bị ảnh hưởng</td><td>F-01 → F-15</td><td>AT-01 → AT-26</td><td>MT-02 → MT-25 (chạy qua <code>http://localhost:3000</code>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="dk-quy-trinh">Quy trình bổ sung</h3>
+    <ol>
+      <li>Viết <code>app/validate.js</code> và các ca AT-27 → AT-44 trong <code>tests.html</code>. Chạy cho tới khi đều có dấu ✓.</li>
+      <li>Viết phần database và API trong server cùng các ca ST. Chạy <code>npm test</code> cho tới khi đều đạt.</li>
+      <li>Viết màn hình S0, lời chào S1, gửi điểm trong game.</li>
+      <li>Viết trang quản trị (A1, A2, A3).</li>
+      <li>Cập nhật <code>compose.yaml</code> (volume, biến môi trường), <code>.env.example</code>, <code>.gitignore</code>, README.</li>
+      <li>Chạy MT-26 → MT-55 trên Chrome máy tính và điện thoại Android; chạy lại MT-02 → MT-25 qua <code>http://localhost:3000</code> để chắc luật chơi cũ không hỏng.</li>
+      <li>Hoàn thành khi mọi dòng trong bảng truy vết bổ sung đều Đạt.</li>
+    </ol>
 
     <nav class="pager" aria-label="Trang trước và sau">
       <a href="04-quy-tac-du-lieu.html"><span>‹ Trước</span>04 · Quy tắc &amp; dữ liệu</a>
