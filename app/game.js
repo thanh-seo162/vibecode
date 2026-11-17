@@ -17,7 +17,12 @@
 
   // ---------- Phần tử ----------
   var $ = function (id) { return document.getElementById(id); };
-  var screens = { start: $("screen-start"), playing: $("screen-play"), ended: $("screen-end") };
+  var screens = {
+    register: $("screen-register"),
+    start: $("screen-start"),
+    playing: $("screen-play"),
+    ended: $("screen-end")
+  };
   var el = {
     startHigh: $("start-high"),
     hudScore: $("hud-score"),
@@ -210,6 +215,7 @@
       highScore = state.score;
       D.saveHighScore(storage, highScore);
     }
+    submitScore(state.score);
 
     el.hudTime.textContent = "0";
     el.endScore.textContent = String(state.score);
@@ -242,8 +248,15 @@
 
   el.board.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
-  el.btnStart.addEventListener("click", startRound);
-  el.btnReplay.addEventListener("click", startRound);
+  el.btnStart.addEventListener("click", function () {
+    if (!player) { showRegister(); return; }
+    startRound();
+  });
+  // Người chơi bị xoá trên server (401 khi gửi điểm) → "Chơi lại" đưa về S0.
+  el.btnReplay.addEventListener("click", function () {
+    if (!player) { showRegister(); return; }
+    startRound();
+  });
 
   // Rời tab: đồng hồ vẫn chạy (Q1). Khi quay lại thì đồng bộ ngay.
   document.addEventListener("visibilitychange", function () {
@@ -259,7 +272,184 @@
     if (rafId === null) rafId = requestAnimationFrame(function () { tick(id); });
   });
 
+  // ---------- Người chơi & đăng ký (F-16 → F-22) ----------
+  var VAL = window.DapChuotValidate;
+  // localStorage bị chặn: vẫn nhớ người chơi trong bộ nhớ cho đến khi tải lại trang.
+  var player = D.loadPlayer(storage);
+
+  var reg = {
+    form: $("register-form"),
+    alert: $("reg-alert"),
+    btn: $("btn-register"),
+    fields: {
+      fullName: { input: $("reg-name"), err: $("reg-name-err") },
+      email: { input: $("reg-email"), err: $("reg-email-err") },
+      phone: { input: $("reg-phone"), err: $("reg-phone-err") },
+      consent: { input: $("reg-consent"), err: $("reg-consent-err") }
+    },
+    sending: false
+  };
+  var greeting = $("greeting");
+  var greetingName = $("greeting-name");
+  var btnNotMe = $("btn-not-me");
+
+  var MESSAGES = {
+    name_required: "Vui lòng nhập họ và tên",
+    name_length: "Họ và tên dài từ 2 đến 50 ký tự",
+    name_chars: "Họ và tên chỉ gồm chữ cái, khoảng trắng và các dấu ' . -",
+    email_required: "Vui lòng nhập email",
+    email_format: "Email chưa đúng định dạng, ví dụ ban@vidu.com",
+    phone_required: "Vui lòng nhập số điện thoại",
+    phone_format: "Số điện thoại gồm 10 chữ số, bắt đầu bằng 0",
+    consent_required: "Bạn cần đồng ý để tiếp tục",
+    network: "Không kết nối được máy chủ. Vui lòng thử lại.",
+    rate_limited: "Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.",
+    server: "Có lỗi xảy ra. Vui lòng thử lại."
+  };
+  var FIELD_ORDER = ["fullName", "email", "phone", "consent"];
+
+  function formInput() {
+    var f = reg.fields;
+    return {
+      fullName: f.fullName.input.value,
+      email: f.email.input.value,
+      phone: f.phone.input.value,
+      consent: f.consent.input.checked
+    };
+  }
+
+  /** Mã lỗi của một ô (dùng chung quy tắc với server), null nếu hợp lệ. */
+  function fieldError(name) {
+    var v = formInput();
+    if (name === "fullName") return VAL.validateName(v.fullName);
+    if (name === "email") return VAL.validateEmail(v.email);
+    if (name === "phone") return VAL.validatePhone(v.phone);
+    return v.consent === true ? null : "consent_required";
+  }
+
+  function setFieldError(name, code) {
+    var f = reg.fields[name];
+    if (code) {
+      f.err.textContent = MESSAGES[code] || MESSAGES.server;
+      f.err.hidden = false;
+      f.input.setAttribute("aria-invalid", "true");
+    } else {
+      f.err.textContent = "";
+      f.err.hidden = true;
+      f.input.removeAttribute("aria-invalid");
+    }
+  }
+
+  function setAlert(msg) {
+    reg.alert.textContent = msg || "";
+    reg.alert.hidden = !msg;
+  }
+
+  function showErrors(errors) {
+    var first = null;
+    FIELD_ORDER.forEach(function (name) {
+      setFieldError(name, errors[name] || null);
+      if (errors[name] && !first) first = name;
+    });
+    if (first) reg.fields[first].input.focus();
+    return !!first;
+  }
+
+  // Lỗi hiện khi rời ô; khi ô đang báo lỗi thì sửa đúng là lỗi biến mất ngay.
+  FIELD_ORDER.forEach(function (name) {
+    var input = reg.fields[name].input;
+    input.addEventListener("blur", function () {
+      if (name === "consent") return;
+      setFieldError(name, fieldError(name));
+    });
+    input.addEventListener(name === "consent" ? "change" : "input", function () {
+      if (input.getAttribute("aria-invalid") === "true") setFieldError(name, fieldError(name));
+    });
+  });
+
+  function setSending(on) {
+    reg.sending = on;
+    reg.btn.disabled = on;
+    reg.btn.textContent = on ? "Đang gửi…" : "Đăng ký và chơi";
+  }
+
+  reg.form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (reg.sending) return;
+    setAlert("");
+    var input = formInput();
+    var check = VAL.validateRegistration(input);
+    if (showErrors(check.errors)) return;
+
+    setSending(true);
+    fetch("/api/players", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input)
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        return { status: res.status, data: data };
+      });
+    }).then(function (r) {
+      setSending(false);
+      if ((r.status === 200 || r.status === 201) && r.data && r.data.token) {
+        player = { id: r.data.id, name: r.data.name, token: r.data.token };
+        D.savePlayer(storage, player);
+        reg.form.reset();
+        showStart();
+        el.btnStart.focus();
+        return;
+      }
+      if (r.status === 400 && r.data && r.data.fields) { showErrors(r.data.fields); return; }
+      setAlert(r.status === 429 ? MESSAGES.rate_limited : MESSAGES.server);
+    }).catch(function () {
+      setSending(false);
+      setAlert(MESSAGES.network);
+    });
+  });
+
+  /** Gửi điểm ngầm sau mỗi lượt; lỗi không làm gián đoạn game, không gửi lại. */
+  function submitScore(score) {
+    if (!player || !window.fetch) return;
+    var sentFor = player;
+    try {
+      fetch("/api/scores", {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sentFor.token },
+        body: JSON.stringify({ score: score })
+      }).then(function (res) {
+        if (res.status === 401 && player === sentFor) forgetPlayer();
+      }).catch(function () { /* mất mạng: bỏ qua */ });
+    } catch (e) { /* bỏ qua */ }
+  }
+
+  function forgetPlayer() {
+    player = null;
+    D.clearPlayer(storage);
+  }
+
+  function showRegister() {
+    setAlert("");
+    FIELD_ORDER.forEach(function (n) { setFieldError(n, null); });
+    showScreen("register");
+  }
+
+  function showStart() {
+    greetingName.textContent = player ? player.name : "";
+    greeting.hidden = !player;
+    btnNotMe.hidden = !player;
+    el.startHigh.textContent = String(highScore);
+    showScreen("start");
+  }
+
+  btnNotMe.addEventListener("click", function () {
+    forgetPlayer();
+    showRegister();
+    reg.fields.fullName.input.focus();
+  });
+
   // ---------- Khởi động ----------
   el.startHigh.textContent = String(highScore);
-  showScreen("start");
+  if (player) showStart(); else showRegister();
 })();

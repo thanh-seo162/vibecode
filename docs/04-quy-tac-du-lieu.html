@@ -241,9 +241,9 @@
     <h3 id="dk-kien-truc">Kiến trúc</h3>
     <ul>
       <li>Giữ server Node.js hiện có (<code>server/server.js</code>). Ngoài phục vụ file tĩnh, server thêm các đường dẫn <code>/api/…</code> và trang <code>/admin</code>. Server phải nhận thêm phương thức <code>POST</code> và <code>DELETE</code> cho <code>/api/…</code>; file tĩnh vẫn chỉ <code>GET</code>/<code>HEAD</code>.</li>
-      <li>Database: SQLite, một file <code>/data/dap-chuot.db</code> trong Docker volume <em>(quyết định Q7)</em>. Đề xuất dùng module <code>node:sqlite</code> có sẵn trong Node 22 để không phải thêm thư viện; nếu gặp hạn chế thì chuyển sang <code>better-sqlite3</code>.</li>
+      <li>Database: PostgreSQL 17, dịch vụ <code>db</code> trong Docker Compose, dữ liệu trong Docker volume <em>(quyết định Q7)</em>. Server kết nối bằng thư viện <code>pg</code> (thư viện ngoài duy nhất), mã truy cập database nằm trong <code>server/lib/db.js</code>.</li>
       <li>Hàm kiểm tra và chuẩn hoá dữ liệu nằm trong một file dùng chung <code>app/validate.js</code>: trình duyệt nạp bằng thẻ script (biến toàn cục <code>DapChuotValidate</code>), server nạp bằng <code>require</code>. Hai bên luôn kiểm tra theo đúng một quy tắc.</li>
-      <li>Mọi truy vấn database dùng câu lệnh có tham số (<code>?</code>), không nối chuỗi.</li>
+      <li>Mọi truy vấn database dùng câu lệnh có tham số (<code>$1</code>, <code>$2</code>…), không nối chuỗi.</li>
     </ul>
 
     <h3 id="dk-hang-so">Hằng số mới</h3>
@@ -286,27 +286,28 @@
     <p>Bảng <code>players</code>:</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Cột</th><th>Kiểu SQLite</th><th>Ràng buộc</th><th>Mô tả</th></tr></thead>
+        <thead><tr><th>Cột</th><th>Kiểu PostgreSQL</th><th>Ràng buộc</th><th>Mô tả</th></tr></thead>
         <tbody>
-          <tr><td><code>id</code></td><td>INTEGER</td><td>PRIMARY KEY AUTOINCREMENT</td><td>Mã người chơi. Không dùng lại mã của người đã xoá.</td></tr>
+          <tr><td><code>id</code></td><td>BIGINT</td><td>GENERATED ALWAYS AS IDENTITY PRIMARY KEY</td><td>Mã người chơi. Không dùng lại mã của người đã xoá. Mã có thể nhảy cóc (đăng ký lại bằng email cũ cũng tiêu một số), không ảnh hưởng gì.</td></tr>
           <tr><td><code>full_name</code></td><td>TEXT</td><td>NOT NULL</td><td>Họ tên đã chuẩn hoá</td></tr>
           <tr><td><code>name_search</code></td><td>TEXT</td><td>NOT NULL</td><td>Họ tên bỏ dấu, chữ thường, dùng để tìm kiếm (xem <code>foldText</code>)</td></tr>
           <tr><td><code>email</code></td><td>TEXT</td><td>NOT NULL UNIQUE</td><td>Email đã chuẩn hoá (chữ thường)</td></tr>
           <tr><td><code>phone</code></td><td>TEXT</td><td>NOT NULL</td><td>10 chữ số, dạng <code>0912345678</code>. Không bắt buộc duy nhất (một số có thể dùng chung trong gia đình).</td></tr>
-          <tr><td><code>best_score</code></td><td>INTEGER</td><td>NOT NULL DEFAULT 0, CHECK 0–100</td><td>Điểm cao nhất</td></tr>
-          <tr><td><code>plays_count</code></td><td>INTEGER</td><td>NOT NULL DEFAULT 0, CHECK ≥ 0</td><td>Số lượt đã ghi nhận</td></tr>
+          <tr><td><code>best_score</code></td><td>INT</td><td>NOT NULL DEFAULT 0, CHECK 0–100</td><td>Điểm cao nhất</td></tr>
+          <tr><td><code>plays_count</code></td><td>INT</td><td>NOT NULL DEFAULT 0, CHECK ≥ 0</td><td>Số lượt đã ghi nhận</td></tr>
           <tr><td><code>token_hash</code></td><td>TEXT</td><td>NOT NULL</td><td>SHA-256 (hex) của token. Không lưu token gốc.</td></tr>
-          <tr><td><code>consent_at</code></td><td>TEXT</td><td>NOT NULL</td><td>Thời điểm đồng ý gần nhất, ISO 8601 giờ UTC, ví dụ <code>2026-11-17T07:05:12.345Z</code></td></tr>
-          <tr><td><code>created_at</code></td><td>TEXT</td><td>NOT NULL</td><td>Thời điểm đăng ký lần đầu (UTC, ISO 8601)</td></tr>
-          <tr><td><code>updated_at</code></td><td>TEXT</td><td>NOT NULL</td><td>Lần cập nhật thông tin gần nhất</td></tr>
-          <tr><td><code>last_played_at</code></td><td>TEXT</td><td>NULL</td><td>Lần gửi điểm gần nhất. <code>NULL</code> nếu chưa chơi lượt nào.</td></tr>
+          <tr><td><code>consent_at</code></td><td>TIMESTAMPTZ</td><td>NOT NULL</td><td>Thời điểm đồng ý gần nhất. API trả về dạng ISO 8601 giờ UTC, ví dụ <code>2026-11-17T07:05:12.345Z</code></td></tr>
+          <tr><td><code>created_at</code></td><td>TIMESTAMPTZ</td><td>NOT NULL</td><td>Thời điểm đăng ký lần đầu</td></tr>
+          <tr><td><code>updated_at</code></td><td>TIMESTAMPTZ</td><td>NOT NULL</td><td>Lần cập nhật thông tin gần nhất</td></tr>
+          <tr><td><code>last_played_at</code></td><td>TIMESTAMPTZ</td><td>NULL</td><td>Lần gửi điểm gần nhất. <code>NULL</code> nếu chưa chơi lượt nào.</td></tr>
         </tbody>
       </table>
     </div>
     <ul>
-      <li>Chỉ mục: <code>UNIQUE(email)</code>, <code>INDEX(created_at)</code>, <code>INDEX(best_score)</code>.</li>
-      <li>Server tự tạo bảng khi khởi động nếu chưa có (<code>CREATE TABLE IF NOT EXISTS</code>), và lưu số phiên bản cấu trúc trong <code>PRAGMA user_version</code> (bắt đầu là 1) để nâng cấp về sau.</li>
-      <li>Bật <code>PRAGMA journal_mode = WAL</code> và <code>PRAGMA busy_timeout = 3000</code>.</li>
+      <li>Chỉ mục: <code>UNIQUE(email)</code>, <code>INDEX(created_at)</code>, <code>INDEX(best_score)</code>, <code>INDEX(token_hash)</code> (tìm người chơi khi gửi điểm).</li>
+      <li>Server tự tạo bảng khi khởi động nếu chưa có (<code>CREATE TABLE IF NOT EXISTS</code>), và lưu số phiên bản cấu trúc trong bảng <code>schema_meta</code> (một dòng, bắt đầu là 1) để nâng cấp về sau.</li>
+      <li>Lúc khởi động, nếu PostgreSQL chưa sẵn sàng thì server thử kết nối lại (tối đa 20 lần, cách nhau 1,5 giây) rồi mới báo lỗi và thoát.</li>
+      <li>Đăng ký dùng <code>INSERT … ON CONFLICT (email) DO UPDATE … RETURNING id, (xmax = 0) AS created</code> trong một câu lệnh, nên không cần mở giao dịch riêng; <code>created</code> cho biết trả <code>201</code> hay <code>200</code>.</li>
       <li>Thời gian lưu bằng UTC; chỉ đổi sang giờ Việt Nam khi hiển thị hoặc xuất CSV.</li>
     </ul>
 
@@ -480,7 +481,7 @@
       <table>
         <thead><tr><th>Biến môi trường</th><th>Mặc định</th><th>Ý nghĩa</th></tr></thead>
         <tbody>
-          <tr><td><code>DB_PATH</code></td><td><code>/data/dap-chuot.db</code></td><td>Đường dẫn file SQLite. Thư mục chứa được tạo nếu chưa có.</td></tr>
+          <tr><td><code>POSTGRES_DB</code>, <code>POSTGRES_USER</code>, <code>POSTGRES_PASSWORD</code></td><td><em>(bắt buộc, trong <code>.env</code>)</em></td><td>Tên database, người dùng và mật khẩu PostgreSQL. Dịch vụ <code>db</code> dùng để khởi tạo; compose chuyển sang app dưới dạng <code>PGDATABASE</code>, <code>PGUSER</code>, <code>PGPASSWORD</code> (thư viện <code>pg</code> tự đọc), kèm <code>PGHOST=db</code>, <code>PGPORT=5432</code>. Thiếu biến nào thì <code>docker compose</code> báo lỗi ngay.</td></tr>
           <tr><td><code>ADMIN_USERNAME</code></td><td><code>admin</code></td><td>Tên đăng nhập quản trị</td></tr>
           <tr><td><code>ADMIN_PASSWORD</code></td><td><em>(không có)</em></td><td>Bắt buộc để bật trang quản trị, tối thiểu 12 ký tự</td></tr>
           <tr><td><code>COOKIE_SECURE</code></td><td><code>0</code></td><td><code>1</code> khi chạy sau HTTPS</td></tr>
@@ -489,9 +490,10 @@
       </table>
     </div>
     <ul>
-      <li><code>compose.yaml</code> thêm volume có tên <code>dap-chuot-data</code> gắn vào <code>/data</code>, nên <code>docker compose down</code> rồi <code>up --build</code> không mất dữ liệu (chỉ mất khi chạy <code>down -v</code>).</li>
-      <li>Mật khẩu đặt trong file <code>.env</code> cạnh <code>compose.yaml</code> (đọc qua <code>env_file</code> hoặc <code>${ADMIN_PASSWORD}</code>). Thêm <code>.env</code> vào <code>.gitignore</code>, kèm file mẫu <code>.env.example</code> không chứa mật khẩu thật.</li>
-      <li>Container chạy bằng người dùng không phải root; thư mục <code>/data</code> thuộc quyền người dùng đó.</li>
+      <li><code>compose.yaml</code> có hai dịch vụ: <code>db</code> (image <code>postgres:17-alpine</code>) và <code>app</code>. Dữ liệu PostgreSQL nằm trong volume có tên <code>dap-chuot-pgdata</code> gắn vào <code>/var/lib/postgresql/data</code>, nên <code>docker compose down</code> rồi <code>up --build</code> không mất dữ liệu (chỉ mất khi chạy <code>down -v</code>).</li>
+      <li><code>db</code> có healthcheck <code>pg_isready</code>; <code>app</code> chỉ khởi động khi <code>db</code> đã healthy (<code>depends_on: condition: service_healthy</code>). Cổng 5432 không mở ra máy, chỉ app trong mạng compose gọi được.</li>
+      <li>Mật khẩu database và quản trị đặt trong file <code>.env</code> cạnh <code>compose.yaml</code> (đọc qua <code>${…}</code>). <code>.env</code> có trong <code>.gitignore</code> và <code>.dockerignore</code>; file mẫu <code>.env.example</code> được commit, không chứa mật khẩu thật.</li>
+      <li>Container app chạy bằng người dùng <code>node</code> (không phải root). Image cài thư viện bằng <code>npm ci --omit=dev</code> theo <code>server/package-lock.json</code>.</li>
       <li><code>/healthz</code> trả <code>ok</code> chỉ khi mở được database.</li>
     </ul>
 

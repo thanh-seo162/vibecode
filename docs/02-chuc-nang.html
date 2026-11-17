@@ -160,8 +160,8 @@
       Mỗi lượt kết thúc, điểm được gửi lên server. Database giữ <em>điểm cao nhất</em> và <em>số lượt chơi</em> của từng người. Kỷ lục trên máy (<code>localStorage</code>, F-11) vẫn giữ nguyên như cũ.
     </div>
     <div class="note decision">
-      <strong>Quyết định Q7: một tài khoản quản trị, database SQLite</strong>
-      Tên đăng nhập và mật khẩu quản trị đặt qua biến môi trường của Docker Compose. Database là một file SQLite nằm trong Docker volume, không thêm container nào.
+      <strong>Quyết định Q7: một tài khoản quản trị, database PostgreSQL</strong>
+      Tên đăng nhập và mật khẩu quản trị đặt trong file <code>.env</code>, Docker Compose đọc vào biến môi trường. Database là PostgreSQL chạy ở dịch vụ riêng <code>db</code> trong Docker Compose, dữ liệu nằm trong Docker volume.
     </div>
     <div class="note warn">
       <strong>Game cần chạy qua server</strong>

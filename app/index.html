@@ -52,8 +52,44 @@
 
 <main class="app">
 
+  <!-- S0 · Màn hình đăng ký (F-16 → F-21) -->
+  <section id="screen-register" class="screen screen-center" aria-labelledby="register-title" hidden>
+    <h1 id="register-title" class="title-display">Đập Chuột</h1>
+    <p class="rules">Đăng ký để bắt đầu chơi</p>
+    <form id="register-form" class="reg-form" novalidate>
+      <p id="reg-alert" class="form-alert" role="alert" hidden></p>
+      <div class="field">
+        <label for="reg-name">Họ và tên</label>
+        <input id="reg-name" class="input" type="text" name="fullName" autocomplete="name"
+               maxlength="50" placeholder="Nguyễn Văn An" required aria-describedby="reg-name-err">
+        <p id="reg-name-err" class="field-error" hidden></p>
+      </div>
+      <div class="field">
+        <label for="reg-email">Email</label>
+        <input id="reg-email" class="input" type="email" name="email" autocomplete="email"
+               inputmode="email" maxlength="254" placeholder="ban@vidu.com" required aria-describedby="reg-email-err">
+        <p id="reg-email-err" class="field-error" hidden></p>
+      </div>
+      <div class="field">
+        <label for="reg-phone">Số điện thoại</label>
+        <input id="reg-phone" class="input" type="tel" name="phone" autocomplete="tel"
+               inputmode="tel" maxlength="20" placeholder="0912 345 678" required aria-describedby="reg-phone-err">
+        <p id="reg-phone-err" class="field-error" hidden></p>
+      </div>
+      <div class="field">
+        <label class="check" for="reg-consent">
+          <input id="reg-consent" type="checkbox" name="consent" required aria-describedby="reg-consent-err">
+          <span>Tôi đồng ý cho lưu họ tên, email, số điện thoại để quản lý người chơi.</span>
+        </label>
+        <p id="reg-consent-err" class="field-error" hidden></p>
+      </div>
+      <button id="btn-register" class="btn btn-primary btn-lg btn-block" type="submit">Đăng ký và chơi</button>
+    </form>
+  </section>
+
   <!-- S1 · Màn hình bắt đầu -->
-  <section id="screen-start" class="screen screen-center" aria-labelledby="start-title">
+  <section id="screen-start" class="screen screen-center" aria-labelledby="start-title" hidden>
+    <p id="greeting" class="greeting" hidden>Xin chào, <strong id="greeting-name"></strong></p>
     <div class="intro-art" aria-hidden="true">
       <div class="intro-hole"></div>
       <div class="intro-pit">
@@ -64,6 +100,7 @@
     <p class="rules">Đập trúng chuột được 1 điểm. Bạn có 30 giây!</p>
     <p class="record">Kỷ lục: <strong id="start-high" class="num">0</strong></p>
     <button id="btn-start" class="btn btn-primary btn-lg" type="button">Bắt đầu</button>
+    <button id="btn-not-me" class="btn-link" type="button" hidden>Không phải bạn?</button>
   </section>
 
   <!-- S2 · Màn hình chơi -->
@@ -103,6 +140,7 @@
   </button>
 </template>
 
+<script src="validate.js"></script>
 <script src="logic.js"></script>
 <script src="game.js"></script>
 </body>

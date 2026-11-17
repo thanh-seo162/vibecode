@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex">
+<title>Quản trị · Đập Chuột</title>
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+
+<!-- Đang kiểm tra phiên -->
+<main id="view-loading" class="center-view" aria-busy="true"></main>
+
+<!-- A1 · Đăng nhập -->
+<main id="view-login" class="center-view" hidden>
+  <form id="login-form" class="card login-card" novalidate>
+    <p class="eyebrow">Quản trị</p>
+    <h1 class="login-title">Đập Chuột</h1>
+    <p id="login-alert" class="form-alert" role="alert" hidden></p>
+    <div class="field">
+      <label for="login-user">Tên đăng nhập</label>
+      <input id="login-user" class="input" type="text" name="username" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="login-pass">Mật khẩu</label>
+      <input id="login-pass" class="input" type="password" name="password" autocomplete="current-password" required>
+    </div>
+    <button id="login-btn" class="btn btn-primary btn-block" type="submit">Đăng nhập</button>
+  </form>
+</main>
+
+<!-- A2 · Danh sách người chơi -->
+<div id="view-list" hidden>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <h1 class="page-title">Người chơi</h1>
+      <span id="admin-name" class="admin-name"></span>
+      <button id="logout-btn" class="btn btn-secondary" type="button">Đăng xuất</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="toolbar">
+      <input id="search" class="input search" type="search" placeholder="Tìm theo tên, email, số điện thoại…"
+             aria-label="Tìm kiếm người chơi" maxlength="100" autocomplete="off">
+      <div class="toolbar-actions">
+        <label class="sort">
+          <span class="visually-hidden">Sắp xếp</span>
+          <select id="sort" class="input select" aria-label="Sắp xếp">
+            <option value="newest">Mới nhất</option>
+            <option value="score">Điểm cao nhất</option>
+            <option value="name">Tên A → Z</option>
+          </select>
+        </label>
+        <button id="bulk-delete-btn" class="btn btn-danger" type="button" hidden>Xoá các mục đã chọn</button>
+        <button id="csv-btn" class="btn btn-primary" type="button">Xuất CSV</button>
+      </div>
+    </div>
+
+    <div id="table-wrap" class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="col-check"><input id="check-all" type="checkbox" aria-label="Chọn tất cả trong trang"></th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Số điện thoại</th>
+            <th class="num">Điểm cao nhất</th>
+            <th class="num">Số lượt</th>
+            <th>Ngày đăng ký</th>
+            <th>Lần chơi cuối</th>
+            <th><span class="visually-hidden">Thao tác</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p id="empty" class="empty" hidden></p>
+
+    <div class="meta">
+      <p id="summary"></p>
+      <nav class="pager" aria-label="Phân trang">
+        <button id="prev-btn" class="btn btn-secondary" type="button">‹ Trước</button>
+        <span id="page-info" class="num"></span>
+        <button id="next-btn" class="btn btn-secondary" type="button">Sau ›</button>
+      </nav>
+    </div>
+  </main>
+</div>
+
+<!-- A3 · Hộp xác nhận xoá -->
+<dialog id="confirm" class="dialog" aria-labelledby="confirm-title">
+  <h2 id="confirm-title"></h2>
+  <p id="confirm-text"></p>
+  <div class="dialog-actions">
+    <button id="confirm-cancel" class="btn btn-secondary" type="button">Huỷ</button>
+    <button id="confirm-ok" class="btn btn-danger-fill" type="button">Xoá</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/validate.js"></script>
+<script src="/admin/admin.js"></script>
+</body>
+</html>

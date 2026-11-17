@@ -1,10 +1,44 @@
+# Chạy:  docker compose up -d --build   →  http://localhost:3000  (quản trị: /admin)
+# Bí mật đọc từ file .env cạnh file này (mẫu: .env.example).
 services:
+  db:
+    image: postgres:17-alpine
+    container_name: dap-chuot-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Thiếu POSTGRES_DB trong .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Thiếu POSTGRES_USER trong .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Thiếu POSTGRES_PASSWORD trong .env}
+    volumes:
+      - dap-chuot-pgdata:/var/lib/postgresql/data
+    # Không mở cổng ra máy: chỉ app trong mạng compose mới gọi được db.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
   app:
     build: .
     image: dap-chuot:latest
     container_name: dap-chuot-app
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
     environment:
       PORT: "3000"
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
     restart: unless-stopped
+
+volumes:
+  dap-chuot-pgdata:

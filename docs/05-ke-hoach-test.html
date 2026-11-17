@@ -276,9 +276,9 @@
           <tr><td>ST-34</td><td>CSV</td><td>Hàm <code>csvCell</code> với <code>Nguyễn "An"</code>, <code>=1+1</code>, <code>+84</code>, <code>-5</code>, <code>@abc</code>, chuỗi có dấu phẩy, chuỗi có xuống dòng</td><td><code>"Nguyễn ""An"""</code>, <code>"'=1+1"</code>, <code>"'+84"</code>, <code>"'-5"</code>, <code>"'@abc"</code>, giữ nguyên dấu phẩy và xuống dòng trong ngoặc kép</td></tr>
           <tr><td>ST-35</td><td>CSV</td><td>Người chưa chơi; người chơi lúc <code>2026-11-17T07:05:00Z</code></td><td>"Lần chơi cuối" trống; ngày hiện <code>17/11/2026 14:05</code></td></tr>
           <tr><td>ST-36</td><td>CSV</td><td>Tìm kiếm không ra ai rồi tải CSV</td><td>File chỉ có BOM + dòng tiêu đề</td></tr>
-          <tr><td>ST-37</td><td>Bền dữ liệu</td><td>Đăng ký, dừng server, khởi động lại với cùng <code>DB_PATH</code></td><td>Dữ liệu còn; token cũ vẫn gửi điểm được; phiên quản trị cũ thì <code>401</code></td></tr>
+          <tr><td>ST-37</td><td>Bền dữ liệu</td><td>Đăng ký, dừng server, khởi động lại (<code>docker compose down</code> rồi <code>up --build</code>, giữ volume)</td><td>Dữ liệu còn; token cũ vẫn gửi điểm được; phiên quản trị cũ thì <code>401</code></td></tr>
           <tr><td>ST-38</td><td>Log</td><td>Bắt log khi đăng ký, đăng nhập sai, tìm kiếm, xoá</td><td>Log không chứa email, SĐT, mật khẩu, token, từ khoá tìm kiếm</td></tr>
-          <tr><td>ST-39</td><td>Tĩnh</td><td><code>GET /</code>, <code>/admin/</code>, <code>/healthz</code>; <code>GET /data/dap-chuot.db</code>, <code>/../.env</code></td><td>3 ca đầu <code>200</code>; 2 ca sau <code>403</code>/<code>404</code>, không bao giờ trả về nội dung file</td></tr>
+          <tr><td>ST-39</td><td>Tĩnh</td><td><code>GET /</code>, <code>/admin/</code>, <code>/healthz</code>; <code>GET /server/server.js</code>, <code>/../.env</code></td><td>3 ca đầu <code>200</code>; 2 ca sau <code>403</code>/<code>404</code>, không bao giờ trả về nội dung file</td></tr>
         </tbody>
       </table>
     </div>

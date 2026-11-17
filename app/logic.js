@@ -17,7 +17,8 @@
     HIT_SHOW_MS: 200,
     WARN_SECONDS: 5,
     POINTS_PER_HIT: 1,
-    STORAGE_KEY: "dapChuot.highScore"
+    STORAGE_KEY: "dapChuot.highScore",
+    PLAYER_KEY: "dapChuot.player"
   };
 
   /** Số ngẫu nhiên đều trong [min, max]. */
@@ -125,7 +126,54 @@
     }
   }
 
+  // ---------- Người chơi trên máy (F-20) ----------
+
+  /** Chuỗi JSON đã lưu → { id, name, token } hoặc null nếu thiếu/hỏng. */
+  function parsePlayer(raw) {
+    if (typeof raw !== "string" || raw === "") return null;
+    var p;
+    try { p = JSON.parse(raw); } catch (e) { return null; }
+    if (!p || typeof p !== "object") return null;
+    if (typeof p.id !== "number" || !(p.id > 0) || Math.floor(p.id) !== p.id) return null;
+    if (typeof p.name !== "string" || p.name === "") return null;
+    if (typeof p.token !== "string" || !/^[0-9a-f]{64}$/.test(p.token)) return null;
+    return { id: p.id, name: p.name, token: p.token };
+  }
+
+  function loadPlayer(storage) {
+    try {
+      if (!storage) return null;
+      return parsePlayer(storage.getItem(CONFIG.PLAYER_KEY));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function savePlayer(storage, p) {
+    try {
+      if (!storage) return false;
+      storage.setItem(CONFIG.PLAYER_KEY, JSON.stringify({ id: p.id, name: p.name, token: p.token }));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function clearPlayer(storage) {
+    try {
+      if (!storage) return false;
+      storage.removeItem(CONFIG.PLAYER_KEY);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   global.DapChuot = {
+    parsePlayer: parsePlayer,
+    loadPlayer: loadPlayer,
+    savePlayer: savePlayer,
+    clearPlayer: clearPlayer,
     CONFIG: CONFIG,
     randomBetween: randomBetween,
     pickHole: pickHole,
