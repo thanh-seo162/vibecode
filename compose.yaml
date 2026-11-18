@@ -25,8 +25,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Chỉ mở cho chính máy này; người ngoài vào qua Cloudflare Tunnel (dịch vụ tunnel bên dưới).
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       PORT: "3000"
       PGHOST: db
@@ -38,6 +39,17 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-0}
       TRUST_PROXY: ${TRUST_PROXY:-0}
+    restart: unless-stopped
+
+  # Cloudflare Tunnel nhanh (miễn phí, không cần tài khoản): tạo một địa chỉ HTTPS ngẫu nhiên
+  # dạng https://xxxx.trycloudflare.com trỏ về app. Xem địa chỉ: docker compose logs tunnel
+  # Địa chỉ đổi mỗi lần container tunnel khởi động lại.
+  tunnel:
+    image: cloudflare/cloudflared:2025.11.1
+    container_name: dap-chuot-tunnel
+    command: tunnel --no-autoupdate --url http://app:3000
+    depends_on:
+      - app
     restart: unless-stopped
 
 volumes:

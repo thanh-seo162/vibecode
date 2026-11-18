@@ -36,6 +36,14 @@ Yêu cầu: đã cài [Docker Desktop](https://www.docker.com/products/docker-de
    - Quản trị: **http://localhost:3000/admin** (đăng nhập bằng `ADMIN_USERNAME` / `ADMIN_PASSWORD` trong `.env`)
    - Trang test logic: http://localhost:3000/tests.html
 
+5. Lấy địa chỉ công khai (Cloudflare Tunnel) để gửi cho người khác chơi:
+
+   ```bash
+   docker compose logs tunnel | grep trycloudflare.com
+   ```
+
+   Địa chỉ có dạng `https://xxxx.trycloudflare.com` (thêm `/admin` cho trang quản trị).
+
 Các lệnh thường dùng:
 
 | Việc cần làm | Lệnh |
@@ -48,10 +56,12 @@ Các lệnh thường dùng:
 
 Ghi chú:
 
-- Compose có 2 dịch vụ: `db` (PostgreSQL 17, dữ liệu trong volume `dap-chuot-pgdata`) và `app` (Node.js 22). App chỉ khởi động khi database đã sẵn sàng.
+- Compose có 3 dịch vụ: `db` (PostgreSQL 17, dữ liệu trong volume `dap-chuot-pgdata`), `app` (Node.js 22) và `tunnel` (Cloudflare Tunnel). App chỉ khởi động khi database đã sẵn sàng.
+- Cloudflare Tunnel dùng chế độ nhanh: miễn phí, không cần tài khoản Cloudflare, nhưng địa chỉ đổi mỗi lần container `tunnel` khởi động lại (kể cả khi khởi động lại máy) và chỉ truy cập được khi máy này đang bật và Docker đang chạy. Cổng 3000 chỉ mở cho chính máy này (`127.0.0.1`), người khác vào qua địa chỉ tunnel.
+- `.env` đặt `COOKIE_SECURE=1` và `TRUST_PROXY=1` vì tunnel phục vụ qua HTTPS và chuyển tiếp IP người chơi.
 - File `.env` chứa mật khẩu nên không được commit (đã có trong `.gitignore`).
 - Thiếu `ADMIN_PASSWORD` (hoặc ngắn hơn 12 ký tự) thì game vẫn chạy nhưng trang `/admin` bị tắt.
 - Code được chép vào image lúc build, nên sửa file xong phải chạy lại `docker compose up -d --build`.
-- Nếu cổng 3000 đã bị chiếm, đổi dòng `"3000:3000"` trong `compose.yaml` thành ví dụ `"3001:3000"` rồi mở http://localhost:3001.
+- Nếu cổng 3000 đã bị chiếm, đổi dòng `"127.0.0.1:3000:3000"` trong `compose.yaml` thành ví dụ `"127.0.0.1:3001:3000"` rồi mở http://localhost:3001.
 - Kiểm tra sức khoẻ: http://localhost:3000/healthz trả về `ok` khi kết nối được database.
 - Game cần server để đăng ký và gửi điểm, nên không mở được bằng cách bấm đúp `app/index.html` nữa.
