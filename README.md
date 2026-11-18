@@ -44,6 +44,14 @@ Yêu cầu: đã cài [Docker Desktop](https://www.docker.com/products/docker-de
 
    Địa chỉ có dạng `https://xxxx.trycloudflare.com` (thêm `/admin` cho trang quản trị).
 
+6. Chạy với tên miền riêng **https://elvion.io.vn** (Cloudflare Tunnel có tên `elvion`):
+
+   ```bash
+   docker compose -f compose.yaml -f compose.prod.yaml up -d
+   ```
+
+   Cần thư mục `cloudflared/` (chứa `config.yml`, `cert.pem` và file khoá `<tunnel-id>.json`; bí mật, đã có trong `.gitignore`). Mất thư mục này thì tạo lại bằng `cloudflared tunnel login`, `tunnel create`, `tunnel route dns`.
+
 Các lệnh thường dùng:
 
 | Việc cần làm | Lệnh |

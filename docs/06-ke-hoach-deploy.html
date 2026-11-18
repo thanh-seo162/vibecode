@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kế hoạch deploy · Đập Chuột</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<nav class="nav" aria-label="Tài liệu">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">Đập Chuột · Tài liệu</a>
+    <a href="01-tong-quan.html">Tổng quan</a>
+    <a href="02-chuc-nang.html">Chức năng</a>
+    <a href="03-man-hinh.html">Màn hình</a>
+    <a href="04-quy-tac-du-lieu.html">Quy tắc &amp; dữ liệu</a>
+    <a href="05-ke-hoach-test.html">Kế hoạch test</a>
+    <a href="06-ke-hoach-deploy.html" aria-current="page">Deploy</a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <p class="eyebrow">06 · Kế hoạch deploy · Bản nháp chờ duyệt</p>
+    <h1>Kế hoạch deploy</h1>
+    <p class="lede">Đưa game lên <strong>https://elvion.io.vn</strong> bằng một máy ảo Compute Engine e2-micro (gói Free Tier của Google Cloud) chạy đúng <code>compose.yaml</code> hiện có. Người chơi vào qua Cloudflare Tunnel, máy ảo không mở cổng web nào.</p>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <ul class="toc">
+      <li><a href="#chan">Điều kiện chặn</a></li>
+      <li><a href="#so-do">Sơ đồ</a></li>
+      <li><a href="#cau-hinh">Cấu hình Free Tier</a></li>
+      <li><a href="#bo-nho">Bộ nhớ 1 GB</a></li>
+      <li><a href="#cac-buoc">Các bước deploy</a></li>
+      <li><a href="#chi-phi">Chi phí &amp; cách tránh</a></li>
+      <li><a href="#xoa">Xoá sạch sau khoá học</a></li>
+      <li><a href="#bao-mat">Rủi ro bảo mật</a></li>
+    </ul>
+
+    <div class="note warn" id="chan">
+      <strong>Điều kiện chặn: phải xử lý trước khi bắt đầu</strong>
+      <ul>
+        <li><strong>Thanh toán Google Cloud chưa xong.</strong> Trang Welcome đang báo "Your Free Trial is pending · Prepayment is needed". Compute Engine (kể cả e2-micro miễn phí) chỉ chạy khi project đã gắn tài khoản thanh toán đang hoạt động. Bạn phải tự bấm <em>Make a payment</em>; khoản trả trước được cộng thành tín dụng, không phải phí.</li>
+        <li><strong>Tên miền phải chuyển DNS về Cloudflare.</strong> Cloudflare Tunnel với tên miền riêng yêu cầu thêm <code>elvion.io.vn</code> vào Cloudflare (gói Free) và đổi nameserver tại nơi đăng ký tên miền. Cần thử ngay ở bước 1, vì cần xác nhận Cloudflare gói Free có nhận tên miền đuôi <code>.io.vn</code> hay không. Nếu không nhận, kế hoạch phải đổi.</li>
+      </ul>
+    </div>
+
+    <h2 id="so-do">Sơ đồ</h2>
+    <figure class="diagram-box">
+      <svg viewBox="0 0 900 360" role="img" aria-label="Người chơi vào elvion.io.vn qua Cloudflare. Cloudflared trong máy ảo mở kết nối ra ngoài tới Cloudflare và chuyển yêu cầu tới app, app gọi database. Quản trị viên vào máy ảo bằng SSH qua Cloud Shell và IAP.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" class="d-arrow"/>
+          </marker>
+        </defs>
+
+        <!-- Máy ảo -->
+        <rect class="d-node" x="480" y="20" width="400" height="320" rx="18" style="fill:none;stroke-dasharray:6 5"/>
+        <text class="d-text" x="500" y="48">Máy ảo e2-micro · us-central1-a</text>
+        <text class="d-sub" x="500" y="66">Debian 12 · Docker Compose · RAM 1 GB + swap 2 GB</text>
+
+        <rect class="d-node accent" x="500" y="96" width="160" height="64" rx="14"/>
+        <text class="d-text" x="580" y="124" text-anchor="middle">tunnel</text>
+        <text class="d-sub" x="580" y="144" text-anchor="middle">cloudflared · ≤128 MB</text>
+
+        <rect class="d-node" x="700" y="96" width="160" height="64" rx="14"/>
+        <text class="d-text" x="780" y="124" text-anchor="middle">app · Node 22</text>
+        <text class="d-sub" x="780" y="144" text-anchor="middle">cổng 3000 · ≤256 MB</text>
+
+        <rect class="d-node" x="700" y="220" width="160" height="64" rx="14"/>
+        <text class="d-text" x="780" y="248" text-anchor="middle">db · PostgreSQL 17</text>
+        <text class="d-sub" x="780" y="268" text-anchor="middle">không mở cổng · ≤256 MB</text>
+
+        <rect class="d-node" x="500" y="220" width="160" height="64" rx="14"/>
+        <text class="d-text" x="580" y="248" text-anchor="middle">Đĩa standard</text>
+        <text class="d-sub" x="580" y="268" text-anchor="middle">30 GB · volume pgdata</text>
+
+        <!-- Người chơi + Cloudflare -->
+        <rect class="d-node" x="20" y="96" width="150" height="64" rx="14"/>
+        <text class="d-text" x="95" y="124" text-anchor="middle">Người chơi</text>
+        <text class="d-sub" x="95" y="144" text-anchor="middle">trình duyệt</text>
+
+        <rect class="d-node accent" x="230" y="86" width="190" height="84" rx="14"/>
+        <text class="d-text" x="325" y="116" text-anchor="middle">Cloudflare</text>
+        <text class="d-sub" x="325" y="136" text-anchor="middle">elvion.io.vn · HTTPS</text>
+        <text class="d-sub" x="325" y="154" text-anchor="middle">DNS · WAF · cache</text>
+
+        <line class="d-line" x1="170" y1="128" x2="226" y2="128" marker-end="url(#ar)"/>
+        <text class="d-sub" x="198" y="118" text-anchor="middle">HTTPS</text>
+        <line class="d-line" x1="500" y1="128" x2="424" y2="128" marker-end="url(#ar)"/>
+        <text class="d-sub" x="462" y="118" text-anchor="middle">ra ngoài</text>
+        <line class="d-line" x1="660" y1="128" x2="696" y2="128" marker-end="url(#ar)"/>
+        <line class="d-line" x1="780" y1="160" x2="780" y2="216" marker-end="url(#ar)"/>
+        <line class="d-line" x1="700" y1="252" x2="664" y2="252" marker-end="url(#ar)"/>
+
+        <!-- Quản trị -->
+        <rect class="d-node" x="20" y="250" width="150" height="64" rx="14"/>
+        <text class="d-text" x="95" y="278" text-anchor="middle">Bạn</text>
+        <text class="d-sub" x="95" y="298" text-anchor="middle">trình duyệt</text>
+
+        <rect class="d-node" x="230" y="250" width="190" height="64" rx="14"/>
+        <text class="d-text" x="325" y="278" text-anchor="middle">Cloud Shell + IAP</text>
+        <text class="d-sub" x="325" y="298" text-anchor="middle">gcloud có sẵn, miễn phí</text>
+
+        <line class="d-line" x1="170" y1="282" x2="226" y2="282" marker-end="url(#ar)"/>
+        <line class="d-line" x1="420" y1="300" x2="476" y2="300" marker-end="url(#ar)"/>
+        <text class="d-sub" x="448" y="320" text-anchor="middle">SSH 22</text>
+      </svg>
+    </figure>
+    <ul>
+      <li><strong>Người chơi</strong> chỉ nói chuyện với Cloudflare. Container <code>tunnel</code> chủ động mở kết nối <em>ra ngoài</em> tới Cloudflare, nên máy ảo không cần nhận kết nối từ Internet.</li>
+      <li><strong>app</strong> và <strong>db</strong> giữ nguyên như bản chạy trên máy bạn. Chỉ khác ở file <code>compose.prod.yaml</code> (bước 6): tunnel dùng token của tên miền thay cho địa chỉ trycloudflare ngẫu nhiên, và mỗi container có giới hạn RAM.</li>
+      <li><strong>Bạn</strong> quản trị máy qua Cloud Shell (dòng lệnh <code>gcloud</code> trong trình duyệt, không phải cài gì trên Windows). SSH chỉ mở cho dải IP của IAP, Google xác thực tài khoản trước.</li>
+    </ul>
+
+    <h2 id="cau-hinh">Cấu hình Free Tier</h2>
+    <p>Free Tier của Compute Engine gồm: 1 máy e2-micro chạy liên tục mỗi tháng ở <code>us-west1</code>, <code>us-central1</code> hoặc <code>us-east1</code>; 30 GB-tháng đĩa standard; 1 GB lưu lượng ra mỗi tháng từ Bắc Mỹ. Điều khoản có thể thay đổi, xem lại trang Free Tier của Google trước khi tạo máy.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mục</th><th>Giá trị</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>Project</td><td>Project riêng, ví dụ <code>dap-chuot-khoa-hoc</code></td><td>Tạo project thì miễn phí. Project riêng giúp bước xoá sạch chỉ cần một lệnh. Có thể dùng <code>My First Project</code> nếu muốn.</td></tr>
+          <tr><td>Loại máy</td><td><code>e2-micro</code></td><td>2 vCPU dùng chung, 1 GB RAM. Loại khác bị tính phí.</td></tr>
+          <tr><td>Vùng</td><td><code>us-central1</code>, zone <code>us-central1-a</code></td><td>Độ trễ từ Việt Nam khoảng 200 ms, đủ cho game này vì điểm chỉ gửi khi hết lượt.</td></tr>
+          <tr><td>Hệ điều hành</td><td>Debian 12 (<code>debian-cloud</code>)</td><td>Không mất phí bản quyền.</td></tr>
+          <tr><td>Đĩa khởi động</td><td>30 GB, loại <code>pd-standard</code></td><td><strong>Phải ghi rõ loại.</strong> Mặc định của Google là <code>pd-balanced</code> và bị tính phí.</td></tr>
+          <tr><td>IP tĩnh</td><td><span class="tag must">Đã chốt</span> không dùng, chỉ IP tạm (ephemeral)</td><td>Tunnel đi ra ngoài nên không cần IP cố định, DNS trỏ vào Cloudflare chứ không trỏ vào máy. IP tĩnh để trống (chưa gắn vào máy) thì <strong>chắc chắn tính phí</strong>.</td></tr>
+          <tr><td>Tường lửa 80, 443</td><td><span class="tag must">Đã chốt</span> không mở</td><td>Không container nào lắng nghe cổng 80/443 trên máy, mọi lượt truy cập đi qua tunnel. Mở thêm chỉ tăng bề mặt bị dò quét.</td></tr>
+          <tr><td>Tường lửa 22 (SSH)</td><td>Chỉ dải IAP <code>35.235.240.0/20</code></td><td>Xoá các luật mặc định <code>default-allow-ssh</code> và <code>default-allow-rdp</code> đang mở cho cả Internet.</td></tr>
+          <tr><td>Cloudflare</td><td>Gói Free: DNS, Tunnel, Access (tối đa 50 người dùng)</td><td>Không mua thêm dịch vụ trả phí (Argo, Load Balancing…).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="bo-nho">Bộ nhớ: máy chỉ có 1 GB RAM</h2>
+    <p>Hệ điều hành và Docker dùng khoảng 250–300 MB, phần còn lại chia cho 3 container. Thêm <strong>2 GB swap</strong> để lúc build image (<code>npm ci</code>) hoặc lúc tải cao không bị hệ điều hành tắt bớt tiến trình. Đặt <code>vm.swappiness=10</code> để chỉ dùng swap khi thật sự thiếu RAM, vì đĩa standard chậm.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Container</th><th>Giới hạn RAM</th><th>Tinh chỉnh thêm</th></tr></thead>
+        <tbody>
+          <tr><td><code>db</code></td><td>256 MB</td><td><code>shared_buffers=32MB</code>, <code>max_connections=20</code> (app dùng tối đa 10), <code>work_mem=2MB</code>, <code>effective_cache_size=128MB</code></td></tr>
+          <tr><td><code>app</code></td><td>256 MB</td><td><code>NODE_OPTIONS=--max-old-space-size=160</code> để Node dọn bộ nhớ trước khi chạm giới hạn</td></tr>
+          <tr><td><code>tunnel</code></td><td>128 MB</td><td>Không cần</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Tổng tối đa 640 MB, còn chỗ cho hệ điều hành. Container nào vượt giới hạn sẽ bị khởi động lại nhờ <code>restart: unless-stopped</code>, không kéo sập cả máy.</p>
+
+    <h2 id="cac-buoc">Các bước deploy</h2>
+    <p>Mọi lệnh <code>gcloud</code> chạy trong <strong>Cloud Shell</strong> (biểu tượng <code>&gt;_</code> góc trên bên phải Google Cloud Console). Lệnh trong máy ảo chạy sau khi SSH vào. Mỗi bước chỉ làm tiếp khi phần "Kiểm tra" đạt.</p>
+
+    <h3>Bước 0 · Chuẩn bị</h3>
+    <ul class="checklist">
+      <li>Đã thanh toán trả trước, trang Billing báo tài khoản đang hoạt động.</li>
+      <li>Có tài khoản Cloudflare (gói Free) và quyền đổi nameserver của <code>elvion.io.vn</code>.</li>
+      <li>Code mới nhất đã push lên GitHub (<code>thanh-seo162/vibecode</code>), hoặc có sẵn file nén để tải lên.</li>
+      <li>Đã sinh mật khẩu mới cho database và trang admin, <strong>không</strong> dùng lại mật khẩu trong <code>.env</code> trên máy bạn.</li>
+    </ul>
+
+    <h3>Bước 1 · Đưa tên miền về Cloudflare</h3>
+    <ol>
+      <li>Cloudflare Dashboard → <em>Add a domain</em> → nhập <code>elvion.io.vn</code> → chọn gói <em>Free</em>.</li>
+      <li>Cloudflare đưa 2 nameserver. Vào trang quản lý tên miền ở nhà đăng ký, thay nameserver cũ bằng 2 nameserver này.</li>
+    </ol>
+    <p><strong>Kiểm tra:</strong> trang tên miền trên Cloudflare báo <em>Active</em> (có thể mất vài giờ). Hoặc chạy lệnh dưới, kết quả là 2 nameserver của Cloudflare:</p>
+    <pre><code>nslookup -type=NS elvion.io.vn</code></pre>
+
+    <h3>Bước 2 · Project, thanh toán và cảnh báo ngân sách</h3>
+    <pre><code>gcloud projects create dap-chuot-khoa-hoc --name="Dap Chuot"
+gcloud billing accounts list
+gcloud billing projects link dap-chuot-khoa-hoc --billing-account=MA_TAI_KHOAN
+gcloud config set project dap-chuot-khoa-hoc
+gcloud services enable compute.googleapis.com iap.googleapis.com</code></pre>
+    <p>Tạo cảnh báo ngân sách trong Console: <em>Billing → Budgets &amp; alerts → Create budget</em>, số tiền <strong>1 USD</strong>, gửi email ở mức 50%, 90%, 100%.</p>
+    <p><strong>Kiểm tra:</strong> <code>gcloud billing projects describe dap-chuot-khoa-hoc</code> có dòng <code>billingEnabled: true</code>. Trang Budgets có ngân sách 1 USD.</p>
+
+    <h3>Bước 3 · Tường lửa và máy ảo</h3>
+    <pre><code># SSH chỉ qua IAP; xoá luật mặc định mở cho cả Internet
+gcloud compute firewall-rules create allow-ssh-iap \
+  --network=default --direction=INGRESS --allow=tcp:22 \
+  --source-ranges=35.235.240.0/20 --target-tags=dap-chuot
+gcloud compute firewall-rules delete default-allow-ssh default-allow-rdp --quiet
+
+# Máy ảo Free Tier
+gcloud compute instances create dap-chuot \
+  --zone=us-central1-a --machine-type=e2-micro \
+  --image-family=debian-12 --image-project=debian-cloud \
+  --boot-disk-size=30GB --boot-disk-type=pd-standard \
+  --tags=dap-chuot --shielded-secure-boot</code></pre>
+    <p><strong>Kiểm tra:</strong></p>
+    <pre><code>gcloud compute instances describe dap-chuot --zone=us-central1-a \
+  --format="value(machineType.basename(),status)"        # e2-micro  RUNNING
+gcloud compute disks describe dap-chuot --zone=us-central1-a \
+  --format="value(type.basename(),sizeGb)"              # pd-standard  30
+gcloud compute firewall-rules list --format="table(name,sourceRanges.list(),allowed[].map().firewall_rule().list())"</code></pre>
+    <p>Danh sách tường lửa không còn luật nào mở cổng 22 hoặc 3389 cho <code>0.0.0.0/0</code>.</p>
+
+    <h3>Bước 4 · Vào máy, thêm swap, bật cập nhật bảo mật</h3>
+    <pre><code>gcloud compute ssh dap-chuot --zone=us-central1-a --tunnel-through-iap</code></pre>
+    <p>Trong máy ảo:</p>
+    <pre><code>sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/99-swap.conf
+sudo sysctl --system
+
+sudo apt-get update
+sudo apt-get install -y unattended-upgrades git</code></pre>
+    <p><strong>Kiểm tra:</strong> <code>free -h</code> có dòng <code>Swap: 2.0Gi</code>; <code>cat /proc/sys/vm/swappiness</code> ra <code>10</code>.</p>
+
+    <h3>Bước 5 · Cài Docker</h3>
+    <p>Cài từ kho chính thức của Docker cho Debian:</p>
+    <pre><code>sudo apt-get install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+https://download.docker.com/linux/debian $(. /etc/os-release &amp;&amp; echo $VERSION_CODENAME) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker $USER     # thoát SSH rồi vào lại để có hiệu lực</code></pre>
+    <p><strong>Kiểm tra:</strong> sau khi vào lại, <code>docker run --rm hello-world</code> in "Hello from Docker!"; <code>docker compose version</code> chạy được; <code>systemctl is-enabled docker</code> ra <code>enabled</code>.</p>
+
+    <h3>Bước 6 · Tạo tunnel cho tên miền, đưa code lên</h3>
+    <ol>
+      <li>Cloudflare Dashboard → <em>Zero Trust → Networks → Tunnels → Create a tunnel</em> → loại <em>Cloudflared</em> → tên <code>dap-chuot</code>. Chép <strong>token</strong> (chuỗi dài sau <code>--token</code>). Bỏ qua phần hướng dẫn cài đặt, vì cloudflared đã chạy trong Docker.</li>
+      <li>Tab <em>Public Hostname</em> → thêm: hostname <code>elvion.io.vn</code>, service <code>HTTP</code>, URL <code>app:3000</code>. Cloudflare tự tạo bản ghi DNS.</li>
+      <li>Trong máy ảo, lấy code:
+        <pre><code>git clone https://github.com/thanh-seo162/vibecode.git dap-chuot
+cd dap-chuot</code></pre>
+        Nếu repo riêng tư: nén code trên máy bạn, tải lên Cloud Shell (menu ⋮ → Upload), rồi <code>gcloud compute scp</code> vào máy ảo.</li>
+      <li>Tạo <code>.env</code> (chỉ chủ sở hữu đọc được):
+        <pre><code>cp .env.example .env
+chmod 600 .env
+nano .env</code></pre>
+        Đặt <code>POSTGRES_PASSWORD</code> và <code>ADMIN_PASSWORD</code> mới (sinh bằng <code>openssl rand -base64 24</code>), giữ <code>COOKIE_SECURE=1</code>, <code>TRUST_PROXY=1</code>, và thêm dòng <code>TUNNEL_TOKEN=…</code>.</li>
+      <li>Tạo <code>compose.prod.yaml</code> cạnh <code>compose.yaml</code>. File này nên được commit vào repo trước khi deploy:
+        <pre><code># Ghi đè cho máy ảo: tunnel theo tên miền + giới hạn RAM.
+# Chạy: docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+services:
+  db:
+    mem_limit: 256m
+    command: >
+      postgres -c shared_buffers=32MB -c max_connections=20
+               -c work_mem=2MB -c effective_cache_size=128MB
+  app:
+    mem_limit: 256m
+    environment:
+      NODE_OPTIONS: --max-old-space-size=160
+  tunnel:
+    mem_limit: 128m
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?Thiếu TUNNEL_TOKEN trong .env}</code></pre></li>
+    </ol>
+    <p><strong>Kiểm tra:</strong> <code>ls -l .env</code> hiện quyền <code>-rw-------</code>; <code>docker compose -f compose.yaml -f compose.prod.yaml config -q</code> không báo lỗi.</p>
+
+    <h3>Bước 7 · Chạy</h3>
+    <pre><code>docker compose -f compose.yaml -f compose.prod.yaml up -d --build</code></pre>
+    <p>Lần build đầu có thể mất vài phút vì máy yếu.</p>
+    <p><strong>Kiểm tra trong máy ảo:</strong></p>
+    <pre><code>docker compose ps                                   # db, app: healthy; tunnel: Up
+docker compose logs tunnel | grep -i "registered"   # có dòng "Registered tunnel connection"
+docker stats --no-stream                            # mỗi container dưới giới hạn RAM
+free -h</code></pre>
+    <p>Trang Tunnels trên Cloudflare báo tunnel <code>dap-chuot</code> ở trạng thái <em>Healthy</em>.</p>
+
+    <h3>Bước 8 · Kiểm tra từ Internet</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mã</th><th>Kiểm tra</th><th>Kết quả mong đợi</th></tr></thead>
+        <tbody>
+          <tr><td>DP-01</td><td>Mở <code>https://elvion.io.vn</code></td><td>Thấy màn hình bắt đầu, ổ khoá HTTPS hợp lệ</td></tr>
+          <tr><td>DP-02</td><td><code>https://elvion.io.vn/healthz</code></td><td><code>ok</code></td></tr>
+          <tr><td>DP-03</td><td><code>https://elvion.io.vn/api/admin/players</code> khi chưa đăng nhập</td><td>401</td></tr>
+          <tr><td>DP-04</td><td>Đăng ký một người chơi thử, chơi một lượt</td><td>Điểm được lưu; người chơi xuất hiện trong <code>/admin</code></td></tr>
+          <tr><td>DP-05</td><td>Đăng nhập <code>/admin</code>, xoá người chơi thử</td><td>Đăng nhập được (cookie Secure qua HTTPS), xoá thành công</td></tr>
+          <tr><td>DP-06</td><td>Từ máy bạn: <code>curl -m 5 http://IP_NGOAI_CUA_MAY:3000</code></td><td>Hết thời gian chờ: không vào thẳng máy ảo được</td></tr>
+          <tr><td>DP-07</td><td><code>sudo reboot</code>, đợi 2 phút, mở lại trang</td><td>Game chạy lại mà không cần làm gì; <code>free -h</code> vẫn có swap</td></tr>
+          <tr><td>DP-08</td><td>Một ngày sau: <em>Billing → Reports</em></td><td>Chi phí 0 hoặc chỉ trừ vào tín dụng. Có khoản lạ thì xem <a href="#chi-phi">Chi phí</a>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Bước 9 · Sao lưu định kỳ</h3>
+    <pre><code>docker exec dap-chuot-db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' &gt; backup-$(date +%F).sql</code></pre>
+    <p>Mỗi tuần một lần, tải file về máy bạn (<code>gcloud compute scp</code> sang Cloud Shell, rồi menu ⋮ → Download). Không dùng snapshot đĩa vì bị tính phí.</p>
+    <p><strong>Kiểm tra:</strong> file có dòng <code>CREATE TABLE public.players</code> và kích thước lớn hơn 0.</p>
+
+    <h3>Cập nhật code về sau</h3>
+    <pre><code>cd ~/dap-chuot &amp;&amp; git pull
+docker compose -f compose.yaml -f compose.prod.yaml up -d --build --force-recreate app</code></pre>
+
+    <h2 id="chi-phi">Khoản có thể tính phí và cách tránh</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Khoản</th><th>Khi nào bị tính phí</th><th>Cách tránh</th></tr></thead>
+        <tbody>
+          <tr><td>Máy ảo</td><td>Loại khác e2-micro, vùng khác 3 vùng Free Tier, hoặc chạy hơn 1 máy (giờ miễn phí tính gộp cho mọi máy e2-micro)</td><td>Đúng 1 máy <code>e2-micro</code> ở <code>us-central1</code>. Máy thử nghiệm phải xoá ngay.</td></tr>
+          <tr><td>Đĩa</td><td>Loại <code>pd-balanced</code>/<code>pd-ssd</code>, tổng hơn 30 GB, hoặc thêm đĩa thứ hai</td><td><code>--boot-disk-type=pd-standard --boot-disk-size=30GB</code>, không tạo thêm đĩa</td></tr>
+          <tr><td>Snapshot, image</td><td>Không có trong Free Tier</td><td>Không tạo; sao lưu bằng <code>pg_dump</code> (bước 9)</td></tr>
+          <tr><td>IP tĩnh</td><td>IP đã giữ nhưng không gắn vào máy đang chạy luôn bị tính phí theo giờ</td><td>Kế hoạch không tạo IP tĩnh. Kiểm tra bằng <code>gcloud compute addresses list</code>: phải rỗng.</td></tr>
+          <tr><td>IPv4 ngoài của máy</td><td>Từ năm 2024 Google tính phí IPv4 ngoài đang dùng. Chưa rõ máy Free Tier có được miễn không.</td><td>Xem DP-08 sau 1 ngày. Nếu có phí, khoảng vài USD/tháng, trừ vào tín dụng dùng thử. Bỏ hẳn IP ngoài thì phải dùng Cloud NAT, còn đắt hơn.</td></tr>
+          <tr><td>Lưu lượng ra</td><td>Hơn 1 GB/tháng (mỗi lần tải game khoảng 100 KB)</td><td>Cloudflare mặc định cache file tĩnh (<code>.js</code>, <code>.css</code>, ảnh), giảm lưu lượng ra từ máy. Lớp học bình thường còn xa mức này.</td></tr>
+          <tr><td>Logging, Monitoring</td><td>Vượt hạn mức miễn phí hằng tháng</td><td>Không cài Ops Agent; container chỉ ghi log ít.</td></tr>
+          <tr><td>Cloud NAT, Load Balancer, Cloud SQL</td><td>Luôn tính phí</td><td>Không dùng: tunnel thay Load Balancer, PostgreSQL chạy trong Docker.</td></tr>
+          <tr><td>Hết dùng thử</td><td>Dùng thử kết thúc sau 90 ngày hoặc khi hết 300 USD. Nếu bạn bấm nâng cấp lên tài khoản trả tiền, phần vượt Free Tier trừ tiền thật.</td><td>Không nâng cấp. Xoá sạch trước khi hết hạn (xem dưới).</td></tr>
+          <tr><td>Cloudflare</td><td>Chỉ khi tự mua thêm dịch vụ</td><td>Ở gói Free. Tunnel, DNS và Access cho tối đa 50 người dùng đều miễn phí.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note warn">
+      <strong>Ngân sách chỉ cảnh báo, không chặn</strong>
+      Cảnh báo 1 USD chỉ gửi email, Google vẫn chạy và tính tiền tiếp. Khi nhận email, mở <em>Billing → Reports</em>, lọc theo <em>SKU</em> để tìm khoản gây phí, rồi xoá tài nguyên đó.
+    </div>
+
+    <h2 id="xoa">Xoá sạch sau khoá học</h2>
+    <ol>
+      <li><strong>Sao lưu nếu cần giữ dữ liệu:</strong> chạy bước 9 lần cuối và tải file về. Sau bước 2 không khôi phục được.</li>
+      <li><strong>Xoá cả project</strong> (xoá máy, đĩa, IP, tường lửa cùng lúc):
+        <pre><code>gcloud projects delete dap-chuot-khoa-hoc</code></pre>
+        Project chuyển sang chờ xoá 30 ngày rồi mất hẳn, tài nguyên ngừng tính phí ngay. Nếu đã dùng <code>My First Project</code> thay vì project riêng, xoá từng thứ:
+        <pre><code>gcloud compute instances delete dap-chuot --zone=us-central1-a   # đĩa khởi động bị xoá theo
+gcloud compute firewall-rules delete allow-ssh-iap</code></pre></li>
+      <li><strong>Cloudflare:</strong> xoá tunnel <code>dap-chuot</code> (Zero Trust → Tunnels), xoá bản ghi DNS của <code>elvion.io.vn</code>, xoá ứng dụng Access nếu có.</li>
+      <li><strong>Đóng tài khoản thanh toán</strong> nếu không dùng Google Cloud nữa: <em>Billing → Account management → Close billing account</em>.</li>
+    </ol>
+    <p><strong>Kiểm tra:</strong> <code>gcloud projects list</code> không còn project (hoặc hiện <code>DELETE_REQUESTED</code>); <code>gcloud compute instances list</code>, <code>disks list</code>, <code>addresses list</code> đều rỗng; vài ngày sau <em>Billing → Reports</em> không có chi phí mới.</p>
+
+    <h2 id="bao-mat">Rủi ro bảo mật và cách xử lý</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Rủi ro</th><th>Hậu quả</th><th>Cách xử lý</th></tr></thead>
+        <tbody>
+          <tr><td>SSH mở cho cả Internet (luật mặc định của mạng <code>default</code>)</td><td>Bị dò mật khẩu, khai thác lỗ hổng SSH</td><td>Xoá <code>default-allow-ssh</code>/<code>rdp</code>, chỉ cho IAP (bước 3). Đăng nhập bằng khoá do <code>gcloud</code> quản lý, không đặt mật khẩu SSH.</td></tr>
+          <tr><td>Vào thẳng máy bằng IP, bỏ qua Cloudflare</td><td>Bỏ qua lớp bảo vệ của Cloudflare; giả được header <code>X-Forwarded-For</code> để né giới hạn tần suất</td><td>Đã chốt không mở 80/443, không có luật tường lửa nào cho web. App chỉ lắng nghe <code>127.0.0.1:3000</code>, chỉ tunnel gọi được (kiểm tra DP-06). Không thêm luật mở cổng về sau.</td></tr>
+          <tr><td>Trang <code>/admin</code> công khai</td><td>Bị dò mật khẩu, lộ danh sách người chơi</td><td>Mật khẩu admin mới, dài từ 20 ký tự (app đã có giới hạn số lần đăng nhập sai). Nên thêm <strong>Cloudflare Access</strong> cho đường dẫn <code>elvion.io.vn/admin*</code> và <code>/api/admin*</code>: chỉ email của bạn vào được, xác thực bằng mã gửi qua email.</td></tr>
+          <tr><td>Lộ <code>.env</code> hoặc <code>TUNNEL_TOKEN</code></td><td>Có token là người khác chạy được tunnel giả mạo tên miền; có mật khẩu là vào được database hoặc admin</td><td><code>chmod 600 .env</code>, không commit (đã có trong <code>.gitignore</code>), không dán vào chat hay ảnh chụp. Nếu lộ: tạo lại token trên trang tunnel, đổi mật khẩu, khởi động lại container.</td></tr>
+          <tr><td>Dữ liệu cá nhân (họ tên, email, số điện thoại)</td><td>Rò rỉ dữ liệu người chơi; trách nhiệm theo Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân</td><td>Chỉ truyền qua HTTPS, database không mở cổng, app đã lưu thời điểm đồng ý. Xoá dữ liệu khi hết khoá học. File sao lưu cũng có dữ liệu cá nhân: cất kỹ, xoá khi không cần.</td></tr>
+          <tr><td>Bot đăng ký rác, spam điểm</td><td>Đầy bảng <code>players</code>, tốn RAM và lưu lượng</td><td>App đã giới hạn 10 lần đăng ký/phút/IP và 30 lần gửi điểm/phút. Bật thêm <em>Bot Fight Mode</em> và một luật Rate limiting cho <code>/api/players</code> trên Cloudflare (gói Free có).</td></tr>
+          <tr><td>Hệ điều hành, Docker, image cũ có lỗ hổng</td><td>Bị khai thác từ xa</td><td><code>unattended-upgrades</code> tự cập nhật bản vá Debian. Mỗi tháng chạy <code>docker compose pull</code> và build lại.</td></tr>
+          <tr><td>Hết RAM, máy treo</td><td>Game ngừng chạy</td><td>Swap 2 GB, giới hạn RAM từng container, <code>restart: unless-stopped</code>. Kiểm tra bằng <code>docker stats</code>.</td></tr>
+          <tr><td>Mất dữ liệu (chỉ một máy, không có bản sao)</td><td>Mất danh sách người chơi và điểm</td><td>Sao lưu <code>pg_dump</code> hằng tuần về máy bạn (bước 9).</td></tr>
+          <tr><td>Hoá đơn bất ngờ</td><td>Bị trừ tín dụng hoặc tiền</td><td>Ngân sách 1 USD có cảnh báo, kiểm tra DP-08, xoá sạch khi xong (xem trên).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note decision">
+      <strong>Trạng thái</strong>
+      Chưa chạy lệnh nào, chưa tạo tài nguyên nào. Đã chốt: bỏ IP tĩnh và không mở cổng 80/443. Còn chờ chốt: dùng project riêng <code>dap-chuot-khoa-hoc</code> hay <code>My First Project</code>.
+    </div>
+
+    <nav class="pager" aria-label="Trang trước và sau">
+      <a href="05-ke-hoach-test.html"><span>‹ Trước</span>05 · Kế hoạch test</a>
+      <a class="next" href="index.html"><span>Về ›</span>Mục lục</a>
+    </nav>
+  </div>
+</main>
+
+<footer><div class="container">Đập Chuột · Tài liệu đặc tả · Giao diện theo <code>design/tokens.css</code></div></footer>
+</body>
+</html>

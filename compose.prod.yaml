@@ -1,0 +1,20 @@
+# Ghi đè khi chạy với tên miền riêng (elvion.io.vn) qua Cloudflare Tunnel có tên,
+# thay cho địa chỉ trycloudflare.com ngẫu nhiên. Cần thư mục cloudflared/ (bí mật, không commit)
+# gồm config.yml và file khoá <tunnel-id>.json, tạo bằng: cloudflared tunnel login / create / route dns.
+# Chạy: docker compose -f compose.yaml -f compose.prod.yaml up -d
+services:
+  db:
+    mem_limit: 256m
+    command: >
+      postgres -c shared_buffers=32MB -c max_connections=20
+               -c work_mem=2MB -c effective_cache_size=128MB
+  app:
+    mem_limit: 256m
+    environment:
+      NODE_OPTIONS: --max-old-space-size=160
+  tunnel:
+    image: cloudflare/cloudflared:2026.11.1
+    mem_limit: 128m
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared:/etc/cloudflared:ro

@@ -21,3 +21,6 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Chứng chỉ và khoá của Cloudflare Tunnel (bí mật)
+cloudflared/
